@@ -1,5 +1,6 @@
 import pytest
 
+from api.schema.schema import *
 from api.schema.schema_query import *
 
 
