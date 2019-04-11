@@ -5,7 +5,6 @@ class SchemaQuery:
     str_select  = 'select '
     str_from    = ' from '
     str_where   = ' where '
-    str_comma   = ', '
 
     def __init__(self, model, fields, filters):
         self.model = model
@@ -13,19 +12,19 @@ class SchemaQuery:
         self.filter = filters
 
     def get_from(self):
-        if self.model is None:
-            raise ValueError('Model is none')
+        if not self.model:
+            raise ValueError('Model is required.')
 
         return self.str_from + self.model
 
     def get_fields(self):
-        if self.fields is None:
-            raise ValueError('Fields is none')
+        if not self.fields:
+            raise ValueError('At least one field is required.')
 
-        return self.str_comma.join(map(str, self.fields)) 
+        return str.join(', ', [str(f) for f in self.fields])
 
     def get_filter(self):
-        if self.filter is None or self.filter == '':
+        if not self.filter:
             return ''
 
         return self.str_where + self.filter.get_expression()
@@ -34,4 +33,4 @@ class SchemaQuery:
         fields = self.get_fields()
         str_from = self.get_from()
         str_filter = self.get_filter()
-        return self.str_select + str(fields) + str(str_from) + str_filter
+        return self.str_select + fields + str_from + str_filter
