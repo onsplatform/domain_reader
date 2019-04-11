@@ -1,15 +1,12 @@
 
 
 class Field:
-    def __init__(self, name, alias: str = None):
+    def __init__(self, name, alias=None):
         self.name = name
-        if (alias is not None):
-            self.alias = alias
-        else:
-            self.alias = name
+        self.alias = alias or name
 
     def __repr__(self):
-        return self.name + ' as ' + self.alias
+        return f'{self.name} as {self.alias}'
 
 
 class Filter:
