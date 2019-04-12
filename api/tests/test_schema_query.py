@@ -82,7 +82,6 @@ def test_create_schema_query_with_parameter_less():
     query = str(SchemaQuery())
 
     # assert
-    assert query == 'select * from pessoa'
 
 
 @pytest.mark.xfail(raises=TypeError)
@@ -94,7 +93,6 @@ def test_create_schema_query_with_only_model():
     query = str(SchemaQuery(model))
 
     # assert
-    assert query == 'select * from pessoa'
 
 
 @pytest.mark.xfail(raises=TypeError)
@@ -108,7 +106,6 @@ def test_create_schema_query_with_model_and_field():
     query = str(SchemaQuery(model, fields))
 
     # assert
-    assert query == 'select * from pessoa'
 
 
 @pytest.mark.xfail(raises=ValueError)
@@ -121,7 +118,6 @@ def test_create_schema_query_with_model_none():
     query = str(SchemaQuery(None, fields, None))
 
     # assert
-    assert query == 'select * from pessoa'
 
 
 @pytest.mark.xfail(raises=ValueError)
@@ -133,7 +129,6 @@ def test_create_schema_query_with_field_none():
     query = str(SchemaQuery(None, None, None))
 
     # assert
-    assert query == 'select * from pessoa'
 
 
 def test_create_schema_query_with_field_and_filter():
