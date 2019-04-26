@@ -1,8 +1,7 @@
-'''
 import falcon
 import msgpack
 import pytest
-from api.app import api
+from ..api.app import api
 from falcon import testing
 
 
@@ -25,4 +24,3 @@ def test_list_usinas(client):
 
     assert result_doc == doc
     assert response.status == falcon.HTTP_OK
-'''
