@@ -4,8 +4,8 @@ import pytest
 import requests
 import requests_mock
 import json
-from ..api.app import api, schema_api
 from falcon import testing
+from api.app import api, schema_api
 
 
 @pytest.fixture

@@ -1,0 +1,3 @@
+[submodule "api/platform_sdk"]
+	path = api/platform_sdk
+	url = git@github.com:onsplatform/platform_sdk.git

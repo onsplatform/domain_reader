@@ -2,7 +2,7 @@ import falcon
 
 from .dbconfig import db
 from .domain import DomainResource
-from ...sdk.schema.schema_api import SchemaApi
+from platform_sdk.schema.schema_api import SchemaApi
 
 api = application = falcon.API()
 
