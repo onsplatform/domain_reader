@@ -12,11 +12,11 @@ class DomainResource():
         if solution == '' or app == '' or map == '':
             resp.status = falcon.HTTP_400
             return
-            
+
         data = self.schema_api.get_schema(solution, app, map)
 
         if data is None:
             resp.status = falcon.HTTP_400
         else:
-            resp.body = json.dumps(data, ensure_ascii=False)
+            resp.body = json.dumps(json.dumps(data), ensure_ascii=False)
             resp.status = falcon.HTTP_200
