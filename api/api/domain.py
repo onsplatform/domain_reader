@@ -14,9 +14,9 @@ class DomainResource():
             return
 
         data = self.domain_reader.get_data(solution, app, map)
-
+        
         if data is None:
-            resp.status = falcon.HTTP_400
+            resp.status = falcon.HTTP_404
         else:
             resp.body = json.dumps(json.dumps(data), ensure_ascii=False)
             resp.status = falcon.HTTP_200
