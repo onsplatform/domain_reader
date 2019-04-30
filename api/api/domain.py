@@ -4,8 +4,8 @@ import json
 
 class DomainResource():
 
-    def __init__(self, schema_api):
-        self.schema_api = schema_api
+    def __init__(self, domain_reader):
+        self.domain_reader = domain_reader
 
     def on_get(self, req, resp, solution, app, map, filter, query):
 
@@ -13,7 +13,7 @@ class DomainResource():
             resp.status = falcon.HTTP_400
             return
 
-        data = self.schema_api.get_schema(solution, app, map)
+        data = self.domain_reader.get_data(solution, app, map)
 
         if data is None:
             resp.status = falcon.HTTP_400

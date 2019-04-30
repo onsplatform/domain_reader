@@ -5,7 +5,7 @@ import requests
 import requests_mock
 import json
 from falcon import testing
-from api.app import api, schema_api
+from api.app import api, domain_reader
 
 
 @pytest.fixture
@@ -29,8 +29,7 @@ def test_list_usinas(client):
 
     # action
     with requests_mock.Mocker() as m:
-        m.get(schema_api._get_schema_api_url(solution, app,
-                                             str_map), status_code=200, json=api_response)
+        m.get(domain_reader.schema_api._get_schema_api_url(solution, app, str_map), status_code=200, json=api_response)
         response = client.simulate_get(
             '/reader/api/v1/{}/{}/{}/by_name/ITAUPU'.format(solution, app, str_map))
     response = json.loads(response.json)
