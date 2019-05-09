@@ -1,5 +1,4 @@
 import falcon
-import msgpack
 import pytest
 import requests
 import requests_mock

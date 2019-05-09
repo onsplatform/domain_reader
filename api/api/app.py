@@ -1,13 +1,12 @@
 import falcon
 
-from .dbconfig import db
-from .domain import DomainResource
+from domain import DomainResource
 from platform_sdk.domain.reader import DomainReader
 
 api = application = falcon.API()
-
 base_uri_v1 = '/reader/api/v1/'
 
+db = 1
 domain_reader = DomainReader(db)
 
 domain = DomainResource(domain_reader)
