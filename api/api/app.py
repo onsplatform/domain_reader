@@ -2,7 +2,7 @@ import falcon
 
 from .dbconfig import db
 from .domain import DomainResource
-from platform_sdk.reader.domain_reader import DomainReader
+from platform_sdk.domain.reader import DomainReader
 
 api = application = falcon.API()
 
