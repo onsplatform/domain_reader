@@ -18,5 +18,5 @@ class DomainResource():
         if data is None:
             resp.status = falcon.HTTP_404
         else:
-            resp.body = json.dumps(json.dumps(data), ensure_ascii=False)
+            resp.body = json.dumps(data)
             resp.status = falcon.HTTP_200

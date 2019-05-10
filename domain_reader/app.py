@@ -2,13 +2,13 @@ import falcon
 
 from platform_sdk.domain.reader import DomainReader
 
-from domain_reader.api import resources, settings
+from .api import resources, settings
 
 
 api = falcon.API()
 api_version = 1
 
-domain_reader = DomainReader(settings.DB)
+domain_reader = DomainReader(settings.ORM)
 domain_resource = resources.DomainResource(domain_reader)
 
 api.add_route(
