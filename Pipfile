@@ -8,6 +8,9 @@ pytest = "*"
 requests-mock = "*"
 mock = "*"
 ipdb = "*"
+coverage = "*"
+pytest-cov = "*"
+waitress = "*"
 
 [packages]
 requests = "*"

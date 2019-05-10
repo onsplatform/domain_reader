@@ -30,4 +30,4 @@ class DomainReader:
 
     def _get_model(self, model, fields):
         return RemoteMap(
-            model['name'], model['table'], self._get_fields(fields))
+            model['name'], model['table'], self._get_fields(fields), self.db)

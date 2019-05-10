@@ -1,5 +1,6 @@
 import falcon
 
+import ipdb; ipdb.set_trace()
 from platform_sdk.domain.reader import DomainReader
 
 from . import resources, settings

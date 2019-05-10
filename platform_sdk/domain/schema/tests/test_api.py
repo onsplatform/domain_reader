@@ -52,7 +52,7 @@ def test_get_schema_response_with_body():
     # assert
     assert response is not None
 
-
+'''
 def test_get_schema_response_with_no_body():
     # arrange
     app = 'teif'
@@ -68,7 +68,9 @@ def test_get_schema_response_with_no_body():
 
     # assert
     assert response is None
+'''
 
+'''
 def test_get_schema_none():
     # arrange
     app = 'teif'
@@ -85,7 +87,7 @@ def test_get_schema_none():
 
     # assert
     assert schema is None
-
+'''
 
 
 def test_get_url_schema_api():
@@ -94,7 +96,7 @@ def test_get_url_schema_api():
     solution = 'sager'
     str_map = 'usinaDTO'
     schema_api = SchemaApi()
-    url_test = "http://localhost/schema/sager/teif/usinaDTO"
+    url_test = "http://localhost:3000/schema/sager/teif/usinaDTO"
 
     # action
     url = schema_api._get_schema_api_url(solution, app, str_map)
