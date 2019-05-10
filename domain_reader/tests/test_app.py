@@ -7,7 +7,7 @@ import requests
 import requests_mock
 from mock import Mock
 
-from api.api.app import api, domain_reader
+from domain_reader.app import domain_reader, api
 
 
 class Usina:

@@ -2,7 +2,7 @@ import falcon
 
 from platform_sdk.domain.reader import DomainReader
 
-from . import resources, settings
+from domain_reader.api import resources, settings
 
 
 api = falcon.API()
