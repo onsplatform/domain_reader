@@ -1,13 +1,15 @@
 import falcon
 
-from domain import DomainResource
 from platform_sdk.domain.reader import DomainReader
 
-api = application = falcon.API()
-base_uri_v1 = '/reader/api/v1/'
+from . import resources, settings
 
-db = 1
-domain_reader = DomainReader(db)
 
-domain = DomainResource(domain_reader)
-api.add_route(base_uri_v1 + '{solution}/{app}/{map}/{filter}/{query}', domain)
+api = falcon.API()
+api_version = 1
+
+domain_reader = DomainReader(settings.DB)
+domain_resource = resources.DomainResource(domain_reader)
+
+api.add_route(
+    settings.BASE_URI[api_version] + '{solution}/{app}/{map}/{filter}/{query}', domain_resource)

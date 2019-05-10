@@ -1,11 +1,13 @@
+import json
+
 import falcon
+from falcon import testing
 import pytest
 import requests
 import requests_mock
-import json
 from mock import Mock
-from falcon import testing
-from api.app import api, domain_reader
+
+from api.api.app import api, domain_reader
 
 
 class Usina:
