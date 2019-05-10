@@ -1,0 +1,21 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pytest = "*"
+requests-mock = "*"
+mock = "*"
+ipdb = "*"
+coverage = "*"
+pytest-cov = "*"
+waitress = "*"
+
+[packages]
+requests = "*"
+peewee = "*"
+falcon = "*"
+
+[requires]
+python_version = "3.7"

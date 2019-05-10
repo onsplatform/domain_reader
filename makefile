@@ -2,7 +2,7 @@ run:
 	@python manage.py runserver
 
 test:
-	@pytest
+	@pytest -s .
 
 migrate:
 	@python manage.py makemigrations

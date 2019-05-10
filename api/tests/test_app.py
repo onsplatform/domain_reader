@@ -1,12 +1,13 @@
+import json
+
 import falcon
-import msgpack
+from falcon import testing
 import pytest
 import requests
 import requests_mock
-import json
 from mock import Mock
-from falcon import testing
-from api.app import api, domain_reader
+
+from api.api.app import api, domain_reader
 
 
 class Usina:
@@ -33,7 +34,8 @@ def test_list_usinas(client):
         ],
         "filter": {"name": "byName", "expression": 'nome = :nome'}
     }
-    domain_reader._execute_query = Mock(return_value=list([Usina('angra 1', 'descricao 1'), Usina('angra 2', 'descricao 2')]))
+    domain_reader._execute_query = Mock(return_value=list(
+        [Usina('angra 1', 'descricao 1'), Usina('angra 2', 'descricao 2')]))
 
     # action
     with requests_mock.Mocker() as m:
@@ -65,7 +67,7 @@ def test_list_entities_with_no_result(client):
         "filter": {"name": "byName", "expression": 'nome = :nome'}
     }
     domain_reader._execute_query = Mock(return_value=list([]))
-    
+
     # action
     with requests_mock.Mocker() as m:
         m.get(domain_reader.schema_api._get_schema_api_url(
@@ -75,6 +77,7 @@ def test_list_entities_with_no_result(client):
 
     # assert
     assert response.status_code == 404
+
 
 def test_list_entities_with_no_parameters(client):
     # arrange
@@ -90,7 +93,7 @@ def test_list_entities_with_no_parameters(client):
         "filter": {"name": "byName", "expression": 'nome = :nome'}
     }
     domain_reader._execute_query = Mock(return_value=list([]))
-    
+
     # action
     with requests_mock.Mocker() as m:
         m.get(domain_reader.schema_api._get_schema_api_url(

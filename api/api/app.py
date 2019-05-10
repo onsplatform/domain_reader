@@ -1,14 +1,16 @@
 import falcon
 
-from .dbconfig import db
-from .domain import DomainResource
-from platform_sdk.reader.domain_reader import DomainReader
+import ipdb; ipdb.set_trace()
+from platform_sdk.domain.reader import DomainReader
 
-api = application = falcon.API()
+from . import resources, settings
 
-base_uri_v1 = '/reader/api/v1/'
 
-domain_reader = DomainReader(db)
+api = falcon.API()
+api_version = 1
 
-domain = DomainResource(domain_reader)
-api.add_route(base_uri_v1 + '{solution}/{app}/{map}/{filter}/{query}', domain)
+domain_reader = DomainReader(settings.DB)
+domain_resource = resources.DomainResource(domain_reader)
+
+api.add_route(
+    settings.BASE_URI[api_version] + '{solution}/{app}/{map}/{filter}/{query}', domain_resource)
