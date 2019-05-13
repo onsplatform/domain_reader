@@ -1,12 +1,11 @@
 import json
-
 import falcon
-from falcon import testing
 import pytest
 import requests
 import requests_mock
-from mock import Mock
 
+from mock import Mock
+from falcon import testing
 from domain_reader.app import domain_reader, api
 
 
@@ -29,8 +28,8 @@ def test_list_usinas(client):
     api_response = {
         "model": {"name": "Usina", "table": "tb_usina"},
         "fields": [
-            {"name": "nome_longo", "alias": "nome", "type": "str"},
-            {"name": "desc", "alias": "descricao", "type": "str"}
+            {"column_name": "nome_longo", "alias": "nome", "field_type": "str"},
+            {"column_name": "desc", "alias": "descricao", "field_type": "str"}
         ],
         "filter": {"name": "byName", "expression": 'nome = :nome'}
     }
@@ -43,7 +42,7 @@ def test_list_usinas(client):
             solution, app, str_map), status_code=200, json=api_response)
         response = client.simulate_get(
             '/reader/api/v1/{}/{}/{}/by_name/ITAUPU'.format(solution, app, str_map))
-    response = json.loads(response.json)
+    response = response.json
 
     # assert
     assert len(response) == 2
@@ -61,8 +60,8 @@ def test_list_entities_with_no_result(client):
     api_response = {
         "model": {"name": "Usina", "table": "tb_usina"},
         "fields": [
-            {"name": "nome_longo", "alias": "nome", "type": "str"},
-            {"name": "desc", "alias": "descricao", "type": "str"}
+            {"column_name": "nome_longo", "alias": "nome", "field_type": "str"},
+            {"column_name": "desc", "alias": "descricao", "field_type": "str"}
         ],
         "filter": {"name": "byName", "expression": 'nome = :nome'}
     }
@@ -87,8 +86,8 @@ def test_list_entities_with_no_parameters(client):
     api_response = {
         "model": {"name": "Usina", "table": "tb_usina"},
         "fields": [
-            {"name": "nome_longo", "alias": "nome", "type": "str"},
-            {"name": "desc", "alias": "descricao", "type": "str"}
+            {"column_name": "nome_longo", "alias": "nome", "field_type": "str"},
+            {"column_name": "desc", "alias": "descricao", "field_type": "str"}
         ],
         "filter": {"name": "byName", "expression": 'nome = :nome'}
     }
