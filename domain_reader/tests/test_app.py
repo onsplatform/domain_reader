@@ -10,7 +10,8 @@ from domain_reader.app import domain_reader, api
 
 
 class Usina:
-    def __init__(self, nome, descricao):
+    def __init__(self, id, nome, descricao):
+        self.id = id
         self.nome = nome
         self.descricao = descricao
 
@@ -28,28 +29,30 @@ def test_list_usinas(client):
     api_response = {
         "model": {"name": "Usina", "table": "tb_usina"},
         "fields": [
-            {"column_name": "nome_longo", "alias": "nome", "field_type": "str"},
-            {"column_name": "desc", "alias": "descricao", "field_type": "str"}
+            {"column_name": "id", "alias": "id", "field_type": "int"},
+            {"column_name": "nome_longo", "alias": "nome", "field_type": "str"}
         ],
-        "filter": {"name": "byName", "expression": 'nome = :nome'}
+        "filters": [
+            {"name": "byName", "expression": "nome_longo in $nomes"},
+            {"name": "byIds", "expression": "id in $ids"}
+        ]
     }
+
     domain_reader._execute_query = Mock(return_value=list(
-        [Usina('angra 1', 'descricao 1'), Usina('angra 2', 'descricao 2')]))
+        [Usina(1, 'angra 1', 'descricao 1'), Usina(2, 'angra 2', 'descricao 2')]))
 
     # action
     with requests_mock.Mocker() as m:
         m.get(domain_reader.schema_api._get_schema_api_url(
             solution, app, str_map), status_code=200, json=api_response)
         response = client.simulate_get(
-            '/reader/api/v1/{}/{}/{}/by_name/ITAUPU'.format(solution, app, str_map))
+            '/reader/api/v1/{}/{}/{}/byName/?nomes=ITAUPU'.format(solution, app, str_map))
     response = response.json
 
     # assert
     assert len(response) == 2
     assert response[0]['nome'] == 'angra 1'
     assert response[1]['nome'] == 'angra 2'
-    assert response[0]['descricao'] == 'descricao 1'
-    assert response[1]['descricao'] == 'descricao 2'
 
 
 def test_list_entities_with_no_result(client):
@@ -60,10 +63,13 @@ def test_list_entities_with_no_result(client):
     api_response = {
         "model": {"name": "Usina", "table": "tb_usina"},
         "fields": [
-            {"column_name": "nome_longo", "alias": "nome", "field_type": "str"},
-            {"column_name": "desc", "alias": "descricao", "field_type": "str"}
+            {"column_name": "id", "alias": "id", "field_type": "int"},
+            {"column_name": "nome_longo", "alias": "nome", "field_type": "str"}
         ],
-        "filter": {"name": "byName", "expression": 'nome = :nome'}
+        "filters": [
+            {"name": "byName", "expression": "nome_longo in $nomes"},
+            {"name": "byIds", "expression": "id in $ids"}
+        ]
     }
     domain_reader._execute_query = Mock(return_value=list([]))
 
@@ -72,7 +78,7 @@ def test_list_entities_with_no_result(client):
         m.get(domain_reader.schema_api._get_schema_api_url(
             solution, app, str_map), status_code=200, json=api_response)
         response = client.simulate_get(
-            '/reader/api/v1/{}/{}/{}/by_name/ITAUPU'.format(solution, app, str_map))
+            '/reader/api/v1/{}/{}/{}/byName/?nomes=ITAUPU'.format(solution, app, str_map))
 
     # assert
     assert response.status_code == 404
@@ -86,10 +92,13 @@ def test_list_entities_with_no_parameters(client):
     api_response = {
         "model": {"name": "Usina", "table": "tb_usina"},
         "fields": [
-            {"column_name": "nome_longo", "alias": "nome", "field_type": "str"},
-            {"column_name": "desc", "alias": "descricao", "field_type": "str"}
+            {"column_name": "id", "alias": "id", "field_type": "int"},
+            {"column_name": "nome_longo", "alias": "nome", "field_type": "str"}
         ],
-        "filter": {"name": "byName", "expression": 'nome = :nome'}
+        "filters": [
+            {"name": "byName", "expression": "nome_longo in $nomes"},
+            {"name": "byIds", "expression": "id in $ids"}
+        ]
     }
     domain_reader._execute_query = Mock(return_value=list([]))
 
@@ -98,7 +107,7 @@ def test_list_entities_with_no_parameters(client):
         m.get(domain_reader.schema_api._get_schema_api_url(
             solution, app, str_map), status_code=200, json=api_response)
         response = client.simulate_get(
-            '/reader/api/v1/{}/{}/{}/by_name/ITAUPU'.format('', '', ''))
+            '/reader/api/v1/{}/{}/{}/byName/?nomes=ITAUPU'.format('', '', ''))
 
     # assert
     assert response.status_code == 400

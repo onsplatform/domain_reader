@@ -12,9 +12,9 @@ class DomainResource():
         if solution == '' or app == '' or map == '':
             resp.status = falcon.HTTP_400
             return
-
-        data = self.domain_reader.get_data(solution, app, map)
         
+        data = self.domain_reader.get_data(solution, app, map, filter, req.params)
+
         if data is None:
             resp.status = falcon.HTTP_404
         else:
