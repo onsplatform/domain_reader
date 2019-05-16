@@ -12,4 +12,4 @@ domain_reader = DomainReader(settings.ORM)
 domain_resource = resources.DomainResource(domain_reader)
 
 api.add_route(
-    settings.BASE_URI[api_version] + '{solution}/{app}/{map}/{filter}/{query}', domain_resource)
+    settings.BASE_URI[api_version] + '{solution}/{app}/{_map}/{_filter}/', domain_resource)
