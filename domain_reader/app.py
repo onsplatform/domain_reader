@@ -8,7 +8,7 @@ from .api import resources, settings
 api = falcon.API()
 api_version = 1
 
-domain_reader = DomainReader(settings.ORM)
+domain_reader = DomainReader(settings.ORM, settings.DATABASE, settings.SCHEMA)
 domain_resource = resources.DomainResource(domain_reader)
 
 api.add_route(
