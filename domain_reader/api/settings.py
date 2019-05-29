@@ -12,7 +12,7 @@ DATABASE = {
 }
 
 SCHEMA = {
-    'api_url': os.environ.get('SCHEMA_URL_API', 'http://localhost:3000/schema/'),
+    'uri': os.environ.get('SCHEMA_URI', 'http://domain_schema/schema/'),
 }
 
 ORM = Peewee
