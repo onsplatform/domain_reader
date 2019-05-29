@@ -17,8 +17,9 @@ autopep8 = "*"
 requests = "*"
 peewee = "*"
 falcon = "*"
-ons-platform-python-sdk = {editable = true,path = "D:/projetos/platform_sdk"}
 psycopg2 = "*"
+ons-platform-python-sdk = {editable = true,git = "https://github.com/onsplatform/platform_sdk.git"}
+gunicorn = "*"
 
 [requires]
 python_version = "3.7"
