@@ -4,10 +4,10 @@ from platform_sdk.domain.reader.orms.peewee import Peewee
 
 
 DATABASE = {
-    'database': os.environ.get('POSTGRES_DB'),
-    'user': os.environ.get('POSTGRES_USER'),
-    'password': os.environ.get('POSTGRES_PASSWORD'),
-    'host': os.environ.get('POSTGRES_HOST'),
+    'database': os.environ.get('POSTGRES_DB', 'platform_domain_schema'),
+    'user': os.environ.get('POSTGRES_USER', 'postgres'),
+    'password': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
+    'host': os.environ.get('POSTGRES_HOST', 'postgres'),
     'port': os.environ.get('POSTGRES_PORT', 5432),
 }
 
