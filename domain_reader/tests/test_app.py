@@ -43,10 +43,9 @@ def test_list_usinas(client):
 
     # action
     with requests_mock.Mocker() as m:
-        m.get(domain_reader.schema_api.get_uri(
-            solution, app, str_map), status_code=200, json=api_response)
+        m.get(domain_reader.schema_api.get_uri(str_map), status_code=200, json=api_response)
         response = client.simulate_get(
-            '/reader/api/v1/{}/{}/{}/byName?nomes=ITAUPU'.format(solution, app, str_map))
+            '/reader/api/v1/{}/byName?nomes=ITAUPU'.format(str_map))
     response = response.json
 
     # assert
@@ -75,10 +74,9 @@ def test_list_entities_with_no_result(client):
 
     # action
     with requests_mock.Mocker() as m:
-        m.get(domain_reader.schema_api.get_uri(
-            solution, app, str_map), status_code=200, json=api_response)
+        m.get(domain_reader.schema_api.get_uri(str_map), status_code=200, json=api_response)
         response = client.simulate_get(
-            '/reader/api/v1/{}/{}/{}/byName?nomes=ITAUPU'.format(solution, app, str_map))
+            '/reader/api/v1/{}/byName?nomes=ITAUPU'.format(str_map))
 
     # assert
     assert response.status_code == 404
@@ -104,10 +102,9 @@ def test_list_entities_with_no_parameters(client):
 
     # action
     with requests_mock.Mocker() as m:
-        m.get(domain_reader.schema_api.get_uri(
-            solution, app, str_map), status_code=200, json=api_response)
+        m.get(domain_reader.schema_api.get_uri(str_map), status_code=200, json=api_response)
         response = client.simulate_get(
-            '/reader/api/v1/{}/{}/{}/byName?nomes=ITAUPU'.format('', '', ''))
+            '/reader/api/v1/{}/byName?nomes=ITAUPU'.format('', '', ''))
 
     # assert
     assert response.status_code == 400
