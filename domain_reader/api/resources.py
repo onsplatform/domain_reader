@@ -7,6 +7,21 @@ class DomainResource():
     def __init__(self, domain_reader):
         self.domain_reader = domain_reader
 
+    def on_post(self, req, resp, _map, _filter):
+        if _map == '':
+            resp.status = falcon.HTTP_400
+            return
+        
+        body = req.stream.read().decode('utf-8')
+        _params = json.loads(body)
+        data = self.domain_reader.get_data(_map, _filter, _params)
+
+        if data is None:
+            resp.status = falcon.HTTP_404
+        else:
+            resp.body = json.dumps(data)
+            resp.status = falcon.HTTP_200
+
     def on_get(self, req, resp, _map, _filter):
         if _map == '':
             resp.status = falcon.HTTP_400
