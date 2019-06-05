@@ -43,7 +43,7 @@ def test_list_usinas(client):
 
     # action
     with requests_mock.Mocker() as m:
-        m.get(domain_reader.schema_api._get_schema_api_url(
+        m.get(domain_reader.schema_api.get_uri(
             solution, app, str_map), status_code=200, json=api_response)
         response = client.simulate_get(
             '/reader/api/v1/{}/{}/{}/byName?nomes=ITAUPU'.format(solution, app, str_map))
@@ -75,7 +75,7 @@ def test_list_entities_with_no_result(client):
 
     # action
     with requests_mock.Mocker() as m:
-        m.get(domain_reader.schema_api._get_schema_api_url(
+        m.get(domain_reader.schema_api.get_uri(
             solution, app, str_map), status_code=200, json=api_response)
         response = client.simulate_get(
             '/reader/api/v1/{}/{}/{}/byName?nomes=ITAUPU'.format(solution, app, str_map))
@@ -104,7 +104,7 @@ def test_list_entities_with_no_parameters(client):
 
     # action
     with requests_mock.Mocker() as m:
-        m.get(domain_reader.schema_api._get_schema_api_url(
+        m.get(domain_reader.schema_api.get_uri(
             solution, app, str_map), status_code=200, json=api_response)
         response = client.simulate_get(
             '/reader/api/v1/{}/{}/{}/byName?nomes=ITAUPU'.format('', '', ''))
