@@ -15,8 +15,16 @@ SCHEMA = {
     'uri': os.environ.get('SCHEMA_URI', 'http://domain_schema/schema/'),
 }
 
+PROCESS_MEMORY = {
+    'api_url': os.environ.get('SCHEMA_URL_API', 'http://10.24.1.91/process_memory/'),
+}
+
 ORM = Peewee
 
 BASE_URI = {
     1: '/reader/api/v1/'
+}
+
+BASE_URI_WRITER = {
+    1: '/writer/api/v1/'
 }
