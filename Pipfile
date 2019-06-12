@@ -18,7 +18,7 @@ requests = "*"
 peewee = "*"
 falcon = "*"
 psycopg2 = "*"
-ons-platform-python-sdk = {editable = true,path = "D:/projetos/platform_sdk"}
+ons-platform-python-sdk = {editable = true,git = "https://github.com/onsplatform/platform_sdk.git"}
 gunicorn = "*"
 
 [requires]

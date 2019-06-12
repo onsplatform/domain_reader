@@ -11,7 +11,7 @@ class DomainWriterResource():
         if process_memory_id == '':
             resp.status = falcon.HTTP_400
             return
-        
+
         ret = self.domain_writer.save_data(process_memory_id)
 
         if not ret:
@@ -28,7 +28,7 @@ class DomainResource():
         if _map == '':
             resp.status = falcon.HTTP_400
             return
-        
+
         body = req.stream.read().decode('utf-8')
         _params = json.loads(body)
         data = self.domain_reader.get_data(_map, _filter, _params)
@@ -43,7 +43,8 @@ class DomainResource():
         if _map == '':
             resp.status = falcon.HTTP_400
             return
-        
+
+        __import__('ipdb').set_trace()
         data = self.domain_reader.get_data(_map, _filter, req.params)
 
         if data is None:
@@ -61,7 +62,7 @@ class DomainHistoryResource():
         if _map == '':
             resp.status = falcon.HTTP_400
             return
-        
+
         data = self.domain_reader.get_data(_map, None, req.params, True)
 
         if data is None:

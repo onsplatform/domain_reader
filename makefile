@@ -1,5 +1,5 @@
 run:
-	@python manage.py runserver
+	@gunicorn domain_reader.app:api --bind 0.0.0.0:8002
 
 test:
 	@pytest -s .
