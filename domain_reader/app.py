@@ -7,7 +7,7 @@ from .api import resources, settings
 from .api import utils
 
 
-api = falcon.API(response_type=utils.APIResponse)
+api = falcon.API(response_type=utils.APIResponse, request_type=utils.APIRequest)
 api_version = 1
 
 domain_reader = DomainReader(settings.ORM, settings.DATABASE, settings.SCHEMA)
