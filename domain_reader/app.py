@@ -4,9 +4,10 @@ from platform_sdk.domain.reader import DomainReader
 from platform_sdk.domain.writer import DomainWriter
 
 from .api import resources, settings
+from .api import utils
 
 
-api = falcon.API()
+api = falcon.API(response_type=utils.APIResponse)
 api_version = 1
 
 domain_reader = DomainReader(settings.ORM, settings.DATABASE, settings.SCHEMA)
