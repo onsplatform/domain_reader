@@ -1,7 +1,7 @@
 import falcon
 
-from platform_sdk.domain.reader import DomainReader
-from platform_sdk.domain.writer import DomainWriter
+from .reader import DomainReader
+from .writer import DomainWriter
 
 from .api import resources, settings
 from .api import utils

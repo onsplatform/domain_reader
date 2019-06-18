@@ -1,5 +1,5 @@
 run:
-	@gunicorn domain_reader.app:api --bind 0.0.0.0:8002
+	@gunicorn domain.app:api --bind 0.0.0.0:8002 --timeout 300
 
 test:
 	@pytest -s .

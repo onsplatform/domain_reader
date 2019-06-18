@@ -6,7 +6,7 @@ import requests_mock
 
 from mock import Mock
 from falcon import testing
-from domain_reader.app import domain_reader, api
+from domain.app import domain_reader, api
 
 
 class Usina:

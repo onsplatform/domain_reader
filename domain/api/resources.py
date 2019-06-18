@@ -32,6 +32,7 @@ class DomainReaderResource(BaseResource):
         return resp.bad_request()
 
     def on_get(self, req, resp, _map, type, _filter):
+        __import__('ipdb').set_trace()
         if  _map:
             data = self.controller.get_data(_map, _filter, req.params)
             return resp.json(data)
