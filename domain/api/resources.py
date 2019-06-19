@@ -14,7 +14,7 @@ class DomainBatchWriterResource(BaseResource):
     """
 
     def on_post(self, req, resp):
-        if not self.controller.save_batch_data(req.json()):
+        if not self.controller.import_data(req.json()):
             return resp.bad_request()
 
         return resp.accepted()

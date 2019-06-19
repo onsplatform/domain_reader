@@ -64,7 +64,7 @@ class APIRequest(falcon.Request):
         request body as json
         """
         body = self.stream.read().decode('utf-8')
-        params = json.loads(body)
+        return json.loads(body)
 
     @property
     def instance_id(self):

@@ -7,14 +7,19 @@ class DomainWriter:
         self.db = orm.db_factory('postgres', **db_settings)()
         self.process_memory_api = ProcessMemoryApi(process_memory_settings)
 
-    def save_batch_data(self, entities_map):
-        bulk_sql = self.convert_map_to_sql(entities_map)
+    def import_data(self, entities):
+        bulk_sql = self._convert_imported_entity_to_sql(entities)
         self._execute_query(bulk_sql)
         return True
 
-    def convert_map_to_sql(self, entities_map):
-        print('')
-        return 'insert into %d () values ()'
+    def _convert_imported_entity_to_sql(self, entities):
+        bulk_sql = []
+        for entity in entities:
+            columns = ','.join([*entity.keys()][:-1])
+            values = ','.join('\'{}\''.format(p) if p != None else 'null' for p in [*entity.values()][:-1])
+            table = entity['_metadata']['type']
+            bulk_sql.append('insert into entities.%s (%s) values (%s)' % (table, columns, values))
+        return bulk_sql
 
     def save_data(self, process_memory_id):
         data = self.process_memory_api.get_process_memory_data(

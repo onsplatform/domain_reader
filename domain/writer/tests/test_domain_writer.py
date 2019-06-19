@@ -1,8 +1,9 @@
 import os
+import json
 import pytest
 
-from platform_sdk.domain.reader.orms.peewee import Peewee
-from platform_sdk.domain.writer import DomainWriter
+from domain.reader.orms.peewee import Peewee
+from domain.writer import DomainWriter
 
 
 @pytest.fixture(scope='class')
@@ -334,3 +335,42 @@ def test_get_sql(db, db_settings, process_memory_settings):
         "insert into tb_unidade_geradora (id_uge,pot_disp,data_inicio_operacao,id_usina) values ('ALUXG-0UG1','527','1997-08-22T00:00:00.000Z','ALUXG');",
         "insert into tb_unidade_geradora (id_uge,pot_disp,data_inicio_operacao,id_usina) values ('ALUXG-0UG2','527','1996-12-20T00:00:00.000Z','ALUXG');"
     ]
+
+def test_save_batch_convert_map_to_sql(db, db_settings, process_memory_settings):
+    # arrange
+    data = '''[
+        {
+            "id_age":1,
+            "ido_ons":"ido_ons",
+            "nom_curto":"nom_curto",
+            "dat_entrada":"0001-01-01T00:00:00",
+            "dat_desativacao":"0001-01-01T00:00:00",
+            "nom_longo":"nom_longo",
+            "_metadata":{
+                "branch":"master",
+                "changeTrack":"create",
+                "type":"e_ageoper"
+            }
+        },
+        {
+            "id_age":"2",
+            "ido_ons":"ido_ons",
+            "nom_curto":"nom_curto",
+            "dat_entrada":"0001-01-01T00:00:00",
+            "dat_desativacao":null,
+            "nom_longo":"nom_longo",
+            "_metadata":{
+                "branch":"master",
+                "changeTrack":"create",
+                "type":"e_ageoper"
+            }
+        }
+    ]'''
+    domain_writer = DomainWriter(db, db_settings, process_memory_settings)
+
+    # action
+    ret = domain_writer._convert_imported_entity_to_sql(json.loads(data))
+
+    # assert
+    assert ret[0] == 'insert into entities.e_ageoper (id_age,ido_ons,nom_curto,dat_entrada,dat_desativacao,nom_longo) values (\'1\',\'ido_ons\',\'nom_curto\',\'0001-01-01T00:00:00\',\'0001-01-01T00:00:00\',\'nom_longo\')'
+    assert ret[1] == 'insert into entities.e_ageoper (id_age,ido_ons,nom_curto,dat_entrada,dat_desativacao,nom_longo) values (\'2\',\'ido_ons\',\'nom_curto\',\'0001-01-01T00:00:00\',null,\'nom_longo\')'
