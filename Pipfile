@@ -17,7 +17,7 @@ autopep8 = "*"
 requests = "*"
 peewee = "*"
 falcon = "*"
-psycopg2 = "*"
+psycopg2-binary = "*"
 ons-platform-python-sdk = {editable = true,git = "https://github.com/onsplatform/platform_sdk.git"}
 gunicorn = "*"
 

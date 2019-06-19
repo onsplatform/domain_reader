@@ -4,13 +4,26 @@ import json
 class BaseResource:
     """
     """
+
     def __init__(self, controller):
         self.controller = controller
+
+
+class DomainBatchWriterResource(BaseResource):
+    """
+    """
+
+    def on_post(self, req, resp):
+        if not self.controller.save_batch_data(req.json()):
+            return resp.bad_request()
+
+        return resp.accepted()
 
 
 class DomainWriterResource(BaseResource):
     """
     """
+
     def on_post(self, req, resp, _map):
         if not req.instance_id:
             return resp.bad_request()
@@ -24,6 +37,7 @@ class DomainWriterResource(BaseResource):
 class DomainReaderResource(BaseResource):
     """
     """
+
     def on_post(self, req, resp, _map, _type, _filter):
         if _map:
             data = self.controller.get_data(_map, _filter, req.json())
@@ -32,8 +46,7 @@ class DomainReaderResource(BaseResource):
         return resp.bad_request()
 
     def on_get(self, req, resp, _map, type, _filter):
-        __import__('ipdb').set_trace()
-        if  _map:
+        if _map:
             data = self.controller.get_data(_map, _filter, req.params)
             return resp.json(data)
 
@@ -43,6 +56,7 @@ class DomainReaderResource(BaseResource):
 class DomainHistoryResource(BaseResource):
     """
     """
+
     def on_get(self, req, resp, _map, type, id):
         if _map:
             data = self.controller.get_data(_map, None, req.params, True)
