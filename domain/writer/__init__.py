@@ -16,9 +16,11 @@ class DomainWriter:
         bulk_sql = []
         for entity in entities:
             columns = ','.join([*entity.keys()][:-1])
-            values = ','.join('\'{}\''.format(p) if p != None else 'null' for p in [*entity.values()][:-1])
+            values = ','.join('\'{}\''.format(p) if p !=
+                              None else 'null' for p in [*entity.values()][:-1])
             table = entity['_metadata']['type']
-            bulk_sql.append('insert into entities.%s (%s) values (%s)' % (table, columns, values))
+            bulk_sql.append('insert into entities.%s (%s) values (%s)' % (
+                table, columns, values))
         return bulk_sql
 
     def save_data(self, process_memory_id):
