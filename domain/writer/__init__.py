@@ -16,12 +16,15 @@ class DomainWriter:
         bulk_sql = []
         for entity in entities:
             columns = ','.join([*entity.keys()][:-1])
-            values = ','.join('\'{}\''.format(p) if p !=
+            values = ','.join('\'{}\''.format(self._remove_special_characters(p)) if p !=
                               None else 'null' for p in [*entity.values()][:-1])
             table = entity['_metadata']['type']
             bulk_sql.append('insert into entities.%s (%s) values (%s)' % (
                 table, columns, values))
         return bulk_sql
+    
+    def _remove_special_characters(self, value):
+        return str(value).replace('\'', '"').replace('%','%%')
 
     def save_data(self, process_memory_id):
         data = self.process_memory_api.get_process_memory_data(
@@ -41,7 +44,12 @@ class DomainWriter:
         with self.db.atomic():
             for sql in bulk_sql:
                 # print(sql)
-                self.db.execute_sql(sql)
+                try:
+                    self.db.execute_sql(sql)
+                except Exception as e:
+                    import ipdb; ipdb.set_trace()
+                    print(sql)
+                    print("sql error: " + str(e))
 
     def _get_sql(self, entites, schema):
         bulk_sql = []
@@ -77,7 +85,7 @@ class DomainWriter:
         columns = (field['column'] for field in fields)
         for schema_field in fields:
             schema_field_name = schema_field['name']
-            values += '\'%s\',' % entity[schema_field_name]
+            values += '\'%s\',' % self._remove_special_characters(entity[schema_field_name])
         insert_sql = 'insert into %s (%s) values (%s);'
         return insert_sql % (table, str.join(',', columns), (values[:-1]))
 

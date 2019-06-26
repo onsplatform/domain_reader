@@ -358,7 +358,7 @@ def test_save_batch_convert_map_to_sql(db, db_settings, process_memory_settings)
             "nom_curto":"nom_curto",
             "dat_entrada":"0001-01-01T00:00:00",
             "dat_desativacao":null,
-            "nom_longo":"nom_longo",
+            "nom_longo":"nom_longo's",
             "_metadata":{
                 "branch":"master",
                 "changeTrack":"create",
@@ -373,4 +373,4 @@ def test_save_batch_convert_map_to_sql(db, db_settings, process_memory_settings)
 
     # assert
     assert ret[0] == 'insert into entities.e_ageoper (id_age,ido_ons,nom_curto,dat_entrada,dat_desativacao,nom_longo) values (\'1\',\'ido_ons\',\'nom_curto\',\'0001-01-01T00:00:00\',\'0001-01-01T00:00:00\',\'nom_longo\')'
-    assert ret[1] == 'insert into entities.e_ageoper (id_age,ido_ons,nom_curto,dat_entrada,dat_desativacao,nom_longo) values (\'2\',\'ido_ons\',\'nom_curto\',\'0001-01-01T00:00:00\',null,\'nom_longo\')'
+    assert ret[1] == 'insert into entities.e_ageoper (id_age,ido_ons,nom_curto,dat_entrada,dat_desativacao,nom_longo) values (\'2\',\'ido_ons\',\'nom_curto\',\'0001-01-01T00:00:00\',null,\'nom_longo"s\')'
