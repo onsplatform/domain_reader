@@ -22,7 +22,7 @@ class DomainWriter:
             bulk_sql.append('insert into entities.%s (%s) values (%s)' % (
                 table, columns, values))
         return bulk_sql
-    
+
     def _remove_special_characters(self, value):
         return str(value).replace('\'', '"').replace('%','%%')
 
@@ -47,8 +47,6 @@ class DomainWriter:
                 try:
                     self.db.execute_sql(sql)
                 except Exception as e:
-                    import ipdb; ipdb.set_trace()
-                    print(sql)
                     print("sql error: " + str(e))
 
     def _get_sql(self, entites, schema):
