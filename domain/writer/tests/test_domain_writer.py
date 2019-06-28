@@ -115,7 +115,7 @@ def test_get_update_sql(db, db_settings, process_memory_settings):
     sql = domain_writer._get_update_sql(entity_id, table, entity, fields)
 
     # asserts
-    assert sql == 'update tb_tarefa_retificacao set nome=\'teste retificação set 2014\',situacao=\'aplicado\' where id=\'88769548-eaf9-4988-8ec2-f9662a23fb5b\';'
+    assert sql == 'UPDATE entities.tb_tarefa_retificacao SET nome=\'teste retificação set 2014\',situacao=\'aplicado\' WHERE id=\'88769548-eaf9-4988-8ec2-f9662a23fb5b\';'
 
 
 def test_get_insert_sql(db, db_settings, process_memory_settings):
@@ -171,7 +171,7 @@ def test_get_insert_sql(db, db_settings, process_memory_settings):
     sql = domain_writer._get_insert_sql(table, entity, fields)
 
     # assert
-    assert sql == 'insert into tb_tarefa_retificacao (nome,situacao) values (\'teste retificação set 2014\',\'aplicado\');'
+    assert sql == 'INSERT INTO entities.tb_tarefa_retificacao (nome,situacao) VALUES (\'teste retificação set 2014\',\'aplicado\');'
 
 
 def test_get_sql(db, db_settings, process_memory_settings):
@@ -328,12 +328,13 @@ def test_get_sql(db, db_settings, process_memory_settings):
     bulk_sql = domain_writer._get_sql(data['dataset']['entities'], schema)
 
     # assert
+    bulk_sql = list(bulk_sql)
     assert len(bulk_sql) == 4
     assert bulk_sql == [
-        "update tb_tarefa_retificacao set nome='teste retificação set 2014',situacao='aplicado' where id='88769548-eaf9-4988-8ec2-f9662a23fb5b';",
-        "update tb_tarefa_retificacao set nome='teste retificação set 2014',situacao='iniciada' where id='b228317b-1e10-4ed2-bf1a-41d5acdbe7e8';",
-        "insert into tb_unidade_geradora (id_uge,pot_disp,data_inicio_operacao,id_usina) values ('ALUXG-0UG1','527','1997-08-22T00:00:00.000Z','ALUXG');",
-        "insert into tb_unidade_geradora (id_uge,pot_disp,data_inicio_operacao,id_usina) values ('ALUXG-0UG2','527','1996-12-20T00:00:00.000Z','ALUXG');"
+        "UPDATE entities.tb_tarefa_retificacao SET nome='teste retificação set 2014',situacao='aplicado' WHERE id='88769548-eaf9-4988-8ec2-f9662a23fb5b';",
+        "UPDATE entities.tb_tarefa_retificacao SET nome='teste retificação set 2014',situacao='iniciada' WHERE id='b228317b-1e10-4ed2-bf1a-41d5acdbe7e8';",
+        "INSERT INTO entities.tb_unidade_geradora (id_uge,pot_disp,data_inicio_operacao,id_usina) VALUES ('ALUXG-0UG1','527','1997-08-22T00:00:00.000Z','ALUXG');",
+        "INSERT INTO entities.tb_unidade_geradora (id_uge,pot_disp,data_inicio_operacao,id_usina) VALUES ('ALUXG-0UG2','527','1996-12-20T00:00:00.000Z','ALUXG');"
     ]
 
 def test_save_batch_convert_map_to_sql(db, db_settings, process_memory_settings):
@@ -370,7 +371,8 @@ def test_save_batch_convert_map_to_sql(db, db_settings, process_memory_settings)
 
     # action
     ret = domain_writer._convert_imported_entity_to_sql(json.loads(data))
+    ret = list(ret)
 
     # assert
-    assert ret[0] == 'insert into entities.e_ageoper (id_age,ido_ons,nom_curto,dat_entrada,dat_desativacao,nom_longo) values (\'1\',\'ido_ons\',\'nom_curto\',\'0001-01-01T00:00:00\',\'0001-01-01T00:00:00\',\'nom_longo\')'
-    assert ret[1] == 'insert into entities.e_ageoper (id_age,ido_ons,nom_curto,dat_entrada,dat_desativacao,nom_longo) values (\'2\',\'ido_ons\',\'nom_curto\',\'0001-01-01T00:00:00\',null,\'nom_longo"s\')'
+    assert ret[0] == 'INSERT INTO entities.e_ageoper (id_age,ido_ons,nom_curto,dat_entrada,dat_desativacao,nom_longo) VALUES (\'1\',\'ido_ons\',\'nom_curto\',\'0001-01-01T00:00:00\',\'0001-01-01T00:00:00\',\'nom_longo\');'
+    assert ret[1] == 'INSERT INTO entities.e_ageoper (id_age,ido_ons,nom_curto,dat_entrada,dat_desativacao,nom_longo) VALUES (\'2\',\'ido_ons\',\'nom_curto\',\'0001-01-01T00:00:00\',null,\'nom_longo"s\');'
