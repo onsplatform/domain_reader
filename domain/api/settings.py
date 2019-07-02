@@ -12,7 +12,7 @@ DATABASE = {
 }
 
 SCHEMA = {
-    'uri': os.environ.get('SCHEMA_URI', 'http://domain_schema/'),
+    'uri': os.environ.get('SCHEMA_URI', 'http://schema/'),
 }
 
 PROCESS_MEMORY = {
