@@ -68,8 +68,9 @@ class DomainWriter:
                 instance_id = objects.get(entity, '_metadata.instance_id')
                 if (instance_id):
                     yield self._get_update_sql(entity['id'], table, entity, fields)
-                else:
-                    yield self._get_insert_sql(table, entity, fields)
+                    continue
+
+                yield self._get_insert_sql(table, entity, fields)
 
     def _get_update_sql(self, instance_id, table, entity, fields):
         values = [f"{f['column']}='{entity[f['name']]}'" for f in fields]
