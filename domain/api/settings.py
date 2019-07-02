@@ -12,11 +12,11 @@ DATABASE = {
 }
 
 SCHEMA = {
-    'uri': os.environ.get('SCHEMA_URI', 'http://domain_schema/schema/'),
+    'uri': os.environ.get('SCHEMA_URI', 'http://domain_schema/'),
 }
 
 PROCESS_MEMORY = {
-    'api_url': os.environ.get('SCHEMA_URL_API', 'http://10.24.1.91/process_memory/'),
+    'api_url': os.environ.get('PROCESS_MEMORY_URI', 'http://process_memory/'),
 }
 
 ORM = Peewee
