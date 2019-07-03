@@ -61,7 +61,6 @@ class DomainReaderNoFilterResource(DomainReaderResource):
         return super().on_post(req, resp, _map, _type, None)
 
     def on_get(self, req, resp, _map, _type):
-        import ipdb; ipdb.set_trace()
         return super().on_get(req, resp, _map, _type, None)
 
 
