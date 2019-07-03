@@ -47,10 +47,22 @@ class DomainReaderResource(BaseResource):
 
     def on_get(self, req, resp, _map, _type, _filter):
         if _map:
-            data = self.controller.get_data(_map,_type, _filter, req.params)
+            data = self.controller.get_data(_map, _type, _filter, req.params)
             return resp.json(data)
 
         return resp.bad_request()
+
+
+class DomainReaderNoFilterResource(DomainReaderResource):
+    """
+    """
+
+    def on_post(self, req, resp, _map, _type):
+        return super().on_post(req, resp, _map, _type, None)
+
+    def on_get(self, req, resp, _map, _type):
+        import ipdb; ipdb.set_trace()
+        return super().on_get(req, resp, _map, _type, None)
 
 
 class DomainHistoryResource(BaseResource):
