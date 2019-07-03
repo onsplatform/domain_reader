@@ -12,7 +12,7 @@ DATABASE = {
 }
 
 SCHEMA = {
-    'uri': os.environ.get('SCHEMA_URI', 'http://schema/'),
+    'uri': os.environ.get('SCHEMA_URI', 'http://schema/api/v1/entitymap/'),
 }
 
 PROCESS_MEMORY = {
