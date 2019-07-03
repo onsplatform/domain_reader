@@ -1,4 +1,4 @@
-from platform_sdk.domain.reader import DomainReader
+from domain.reader import DomainReader
 
 
 def test_init_domain_reader(db, schema_settings, db_settings):

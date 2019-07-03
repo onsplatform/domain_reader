@@ -25,7 +25,8 @@ def test_list_usinas(client):
     # arrange
     app = 'calculoteif'
     solution = 'sager'
-    str_map = 'usinaDTO'
+    str_map = 'sager'
+    str_type = 'usinaDTO'
     api_response = {
         "model": {"name": "Usina", "table": "tb_usina"},
         "fields": [
@@ -43,9 +44,10 @@ def test_list_usinas(client):
 
     # action
     with requests_mock.Mocker() as m:
-        m.get(domain_reader.schema_api.get_uri(str_map), status_code=200, json=api_response)
+        m.get(domain_reader.schema_api.get_uri(str_map, str_type),
+              status_code=200, json=api_response)
         response = client.simulate_get(
-            '/reader/api/v1/{}/x/byName?nomes=ITAUPU'.format(str_map))
+            '/reader/api/v1/{}/x/byName?nomes=ITAUPU'.format(str_map, str_type))
     response = response.json
 
     # assert
@@ -58,7 +60,8 @@ def test_list_entities_with_no_result(client):
     # arrange
     app = 'calculoteif'
     solution = 'sager'
-    str_map = 'usinaDTO'
+    str_map = 'sager'
+    str_type = 'usinaDTO'
     api_response = {
         "model": {"name": "Usina", "table": "tb_usina"},
         "fields": [
@@ -71,12 +74,13 @@ def test_list_entities_with_no_result(client):
         ]
     }
     domain_reader._execute_query = Mock(return_value=list([]))
-
+    
     # action
     with requests_mock.Mocker() as m:
-        m.get(domain_reader.schema_api.get_uri(str_map), status_code=200, json=api_response)
+        m.get(domain_reader.schema_api.get_uri(str_map, str_type),
+              status_code=200, json=api_response)
         response = client.simulate_get(
-            '/reader/api/v1/{}/x/byName?nomes=ITAUPU'.format(str_map))
+            '/reader/api/v1/{}/{}/byName?nomes=ITAUPU'.format(str_map, str_type))
 
     # assert
     assert response.status_code == 404
@@ -86,7 +90,8 @@ def test_list_entities_with_no_parameters(client):
     # arrange
     app = 'calculoteif'
     solution = 'sager'
-    str_map = 'usinaDTO'
+    str_map = 'sager'
+    str_type = 'usinaDTO'
     api_response = {
         "model": {"name": "Usina", "table": "tb_usina"},
         "fields": [
@@ -102,9 +107,10 @@ def test_list_entities_with_no_parameters(client):
 
     # action
     with requests_mock.Mocker() as m:
-        m.get(domain_reader.schema_api.get_uri(str_map), status_code=200, json=api_response)
+        m.get(domain_reader.schema_api.get_uri(str_map, str_type),
+              status_code=200, json=api_response)
         response = client.simulate_get(
-            '/reader/api/v1/{}/x/byName?nomes=ITAUPU'.format('', '', ''))
+            '/reader/api/v1/{}/{}/byName?nomes=ITAUPU'.format('', '', ''))
 
     # assert
     assert response.status_code == 400

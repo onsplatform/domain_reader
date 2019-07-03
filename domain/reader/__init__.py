@@ -13,8 +13,8 @@ class DomainReader:
         self.db = orm.db_factory('postgres', **db_settings)()
         self.schema_api = SchemaApi(schema_settings)
 
-    def get_data(self, _map, filter_name, params, history=False):
-        api_response = self.schema_api.get_schema(_map)
+    def get_data(self, _map, _type, filter_name, params, history=False):
+        api_response = self.schema_api.get_schema(_map, _type)
 
         if api_response:
             model = self._get_model(

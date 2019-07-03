@@ -1,6 +1,6 @@
 import os
 
-from platform_sdk.domain.reader.orms.peewee import Peewee
+from domain.reader.orms.peewee import Peewee
 
 
 DATABASE = {

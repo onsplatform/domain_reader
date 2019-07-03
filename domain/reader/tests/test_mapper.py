@@ -1,7 +1,7 @@
 import mock
 
-from platform_sdk.domain.reader.orms.peewee import Peewee
-from platform_sdk.domain.reader.mapper import RemoteField, RemoteMap
+from domain.reader.orms.peewee import Peewee
+from domain.reader.mapper import RemoteField, RemoteMap
 
 
 

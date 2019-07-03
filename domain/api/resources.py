@@ -40,14 +40,14 @@ class DomainReaderResource(BaseResource):
 
     def on_post(self, req, resp, _map, _type, _filter):
         if _map:
-            data = self.controller.get_data(_map, _filter, req.json())
+            data = self.controller.get_data(_map, _type, _filter, req.json())
             return resp.json(data)
 
         return resp.bad_request()
 
-    def on_get(self, req, resp, _map, type, _filter):
+    def on_get(self, req, resp, _map, _type, _filter):
         if _map:
-            data = self.controller.get_data(_map, _filter, req.params)
+            data = self.controller.get_data(_map,_type, _filter, req.params)
             return resp.json(data)
 
         return resp.bad_request()
