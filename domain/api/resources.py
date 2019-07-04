@@ -46,11 +46,15 @@ class DomainReaderResource(BaseResource):
         return resp.bad_request()
 
     def on_get(self, req, resp, _map, _type, _filter):
+        print(f'DomainReaderResource::on_get::request uri {req.uri}')
+        print(f'DomainReaderResource::on_get::arguments::map::{_map} type::{_type} filter::{_filter}')
         if _map:
             try:
                 data = self.controller.get_data(_map, _type, _filter, req.params)
+                print(f'DomainReaderResource::on_get::data:: {len(data)}')
                 return resp.json(data)
             except Exception as e:
+                print(f'DomainReaderResource::on_get::internal error::{e}')
                 return resp.internal_error('error to be handled.')
 
         return resp.bad_request()

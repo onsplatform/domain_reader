@@ -15,14 +15,23 @@ class DomainReader:
 
     def get_data(self, _map, _type, filter_name, params, history=False):
         api_response = self.schema_api.get_schema(_map, _type)
+        print(f'DomainReader::get_data:api_response::{api_response}')
 
         if api_response:
             model = self._get_model(
                 api_response['model'], api_response['fields'], history)
+            print(f'DomainReader::get_data:model::{model}')
+
             sql_filter = self._get_sql_filter(
                 filter_name, api_response['filters'])
+            print(f'DomainReader::get_data:sql_filter::{sql_filter}')
+
             sql_query = self._get_sql_query(sql_filter, params)
+            print(f'DomainReader::get_data:sql_query::{sql_query}')
+
             data = self._execute_query(model, sql_query)
+            print(f'DomainReader::get_data:data::{len(data)}')
+
             return self._get_response_data(data, api_response['fields'])
 
     def _execute_query(self, model, sql_query):  # pragma: no cover
