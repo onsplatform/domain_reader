@@ -37,8 +37,8 @@ class APIResponse(falcon.Response):
         """
         embeds json data into response body.
         """
-        if not data:
-            return self.not_found()
+        if data is None:
+            data = []
 
         self.status = status_code
         self.body = json.dumps(data, cls=UUIDEncoder)
