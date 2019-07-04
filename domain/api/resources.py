@@ -51,7 +51,7 @@ class DomainReaderResource(BaseResource):
         if _map:
             try:
                 data = self.controller.get_data(_map, _type, _filter, req.params)
-                print(f'DomainReaderResource::on_get::data:: {len(data)}')
+                print(f'DomainReaderResource::on_get::data:: {len(data) if data else 0}')
                 return resp.json(data)
             except Exception as e:
                 print(f'DomainReaderResource::on_get::internal error::{e}')
