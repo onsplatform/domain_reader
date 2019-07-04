@@ -47,8 +47,11 @@ class DomainReaderResource(BaseResource):
 
     def on_get(self, req, resp, _map, _type, _filter):
         if _map:
-            data = self.controller.get_data(_map, _type, _filter, req.params)
-            return resp.json(data)
+            try:
+                data = self.controller.get_data(_map, _type, _filter, req.params)
+                return resp.json(data)
+            except Exception as e:
+                return resp.internal_error('error to be handled.')
 
         return resp.bad_request()
 

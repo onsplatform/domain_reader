@@ -8,6 +8,7 @@ class PeeweeSqliteDbFactory:
     def __call__(self):
         return peewee.SqliteDatabase(self.path)
 
+
 class PostgresDbFactory:
     def __init__(self, *args, **kwargs):
         self.kwargs = kwargs
@@ -21,6 +22,8 @@ class Peewee:
 
     FIELD_TYPES = {
         'str': peewee.CharField,
+        'varchar': peewee.CharField,
+        'text': peewee.TextField,
         'char': peewee.CharField,
         'bool': peewee.BooleanField,
         'float': peewee.FloatField,
@@ -36,7 +39,11 @@ class Peewee:
 
     @classmethod
     def build_field(cls, field):
-        wrapper = cls.FIELD_TYPES.get(field.field_type)
+        wrapper = cls.FIELD_TYPES.get(field.field_type.lower())
+
+        if not wrapper:
+            raise NotImplementedError(f"field type {field.field_type} is not supported.")
+
         return wrapper(null=True, column_name=field.column_name)
 
     @classmethod

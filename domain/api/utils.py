@@ -26,11 +26,12 @@ class APIResponse(falcon.Response):
         """
         self.status = falcon.HTTP_400
 
-    def internal_error(self):
+    def internal_error(self, error_message=None):
         """
         sets response status to HTTP 500 internal server error.
         """
         self.status = falcon.HTTP_500
+        self.media = {'error': error_message}
 
     def json(self, data, status_code=falcon.HTTP_200):
         """
