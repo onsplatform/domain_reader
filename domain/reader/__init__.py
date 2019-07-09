@@ -29,7 +29,7 @@ class DomainReader:
             print(f'DomainReader::get_data:sql_query::{sql_query}')
 
             data = self._execute_query(model, sql_query)
-            print(f'DomainReader::get_data:data::{len(data)}')
+            print(f'DomainReader::get_data:data::{len(data) if data else 0}')
 
             return self._get_response_data(data, api_response['fields'])
 
