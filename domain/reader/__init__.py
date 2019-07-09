@@ -22,9 +22,10 @@ class DomainReader:
 
     def get_data(self, _map, _type, filter_name, params, history=False):
         api_response = self.schema_api.get_schema(_map, _type)
-        self._trace_local('api_response', api_response)
 
         if api_response:
+            self._trace_local('api_response', api_response.get('id'))
+
             model = self._get_model(
                 api_response['model'], api_response['fields'], history)
             self._trace_local('model', model)
