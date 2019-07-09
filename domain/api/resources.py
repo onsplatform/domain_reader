@@ -55,6 +55,7 @@ class DomainReaderResource(BaseResource):
                 return resp.json(data)
             except Exception as e:
                 print(f'DomainReaderResource::on_get::internal error::{e}')
+                # TODO: improve error details and log.
                 return resp.internal_error('error to be handled.')
 
         return resp.bad_request()

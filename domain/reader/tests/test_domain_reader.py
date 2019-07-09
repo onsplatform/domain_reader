@@ -119,7 +119,6 @@ def test_get_response_data_empty(db, schema_settings, db_settings):
     # assert
     assert not data
 
-
 def test_execute_query(db, schema_settings, db_settings): #
     # arrange
     domain_reader = DomainReader(db, db_settings, schema_settings)

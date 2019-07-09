@@ -74,7 +74,7 @@ def test_list_entities_with_no_result(client):
         ]
     }
     domain_reader._execute_query = Mock(return_value=list([]))
-    
+
     # action
     with requests_mock.Mocker() as m:
         m.get(domain_reader.schema_api.get_uri(str_map, str_type),

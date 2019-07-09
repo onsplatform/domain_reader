@@ -1,9 +1,9 @@
-import re
-
 from peewee import SQL
 
-from .mapper import RemoteField, RemoteMap
 from platform_sdk.domain.schema.api import SchemaApi
+
+from .mapper import RemoteField, RemoteMap
+from .sql import QueryParser
 
 
 class DomainReader:
@@ -37,56 +37,17 @@ class DomainReader:
         proxy_model = model.build(self.db)
         query = proxy_model.select()
         if (sql_query):
-            query = query.where(
-                SQL(sql_query['sql_query'], sql_query['query_params']))
-        return list([d for d in query])
-
-    def remove_optional_parameters(self, sql_filter, parameters):
-        regex = re.compile(r"\[\w.*(:\w*)]|([:\$]\w*)")
-        test_str = "col = 1 [and col = :col] and col2 = :col2 and id in ($ids);"
-        matches = re.finditer(regex, test_str)
-        unused_params = [m.group(1) for m in matches if m.group(1) not in parameters]
-        __import__('ipdb').set_trace()
-
-        for u in unused_params:
-            sql_filter.replace(u, '')
-
-        for match in matches:
-            opt, arg = match.groups()
-
-            # if opt[1:] not in parameters:
-
-            print('param:', match.group(), opt, arg)
-
+            sql = SQL(sql_query['sql_query'], sql_query['query_params'])
+            return query.where(sql)
 
     def _get_sql_query(self, sql_filter, params):
-        __import__('ipdb').set_trace()
-        self.remove_optional_parameters(sql_filter, params)
         if sql_filter:
-            # regex = re.compile(r'\[\w.*]|[:,\$]\w*')
-            # grp = regex.search(sql_filter).groups()
-            query_params = []
-            matches = re.finditer(r"([:,\$]\w+)", sql_filter, re.MULTILINE)
-
-            for arg in matches:
-                # named parameters, eg: $name :name
-                arg = arg.group()
-
-                # get named value from params
-                val = params.get(arg[1:])
-
-                # if parameter is a list or begins with $, make tuple
-                if (isinstance(val, list) or (arg[0:1] == '$')):
-                    val = (*val, )
-
-                query_params.append(val)
-
-                # replace argument with %s
-                sql_filter = sql_filter.replace(arg, '%s')
+            parser = QueryParser(sql_filter)
+            query, params = parser.parse(params)
 
             return {
-                'sql_query': sql_filter,
-                'query_params': (*query_params,)
+                'sql_query': query,
+                'query_params': params
             }
 
     def _get_response_data(self, entities, fields):
