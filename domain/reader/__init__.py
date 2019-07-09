@@ -47,7 +47,7 @@ class DomainReader:
     def _execute_query(self, model, sql_query):  # pragma: no cover
         proxy_model = model.build(self.db)
         query = proxy_model.select()
-        if (sql_query):
+        if (sql_query and sql_query['sql_query']):
             sql = SQL(sql_query['sql_query'], sql_query['query_params'])
             return query.where(sql)
 
