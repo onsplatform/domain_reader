@@ -55,3 +55,16 @@ def test_remove_optional_parameter(): #
     # assert
     assert params == ()
     assert query == 'col = val'
+
+
+def test_parse_optional_filter_with_no_parameters():
+    sql_filter = '[id in ($ids)]'
+    parameters = {}
+
+    # act
+    parser = QueryParser(sql_filter)
+    query, params = parser.parse(parameters)
+
+    # assert
+    assert params == ()
+    assert query == ''

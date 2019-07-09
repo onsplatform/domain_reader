@@ -4,17 +4,24 @@ import re
 class QueryParser:
     def __init__(self, query):
         self.query = query
-        self.regex = re.compile(r"\[\w.*(:\w*)]|([:\$]\w*)")
+        self.regex = re.compile(r"\[\w.*([:\$]\w.*)]|([:\$]\w.*)")
+        self.regex_cleaner = re.compile(r"[^a-zA-Z0-9]")
 
     def parse_param(self, place_holder, parameters):
-        opt_param, req_param =  place_holder.groups()
+        # TODO: if the parameter is enclosed between parenthesis, the regex
+        # includes the closing one in the match.
+        # We need a fix for this.
+        # Manual replacements were executed as a temporary solution.
+        opt_param, req_param = place_holder.groups()
         holder = None
         value = None
 
         if opt_param:
+            opt_param = opt_param.replace(')', '') # this line can be removed once we fix the regex.
             value = parameters.get(opt_param[1:])
             holder = opt_param if value else place_holder.group()
         else:
+            req_param = req_param.replace(')', '') # this line can be removed once we fix the regex.
             value = parameters[req_param[1:]]
             holder = req_param
 

@@ -21,6 +21,8 @@ class DomainReader:
                 msg=f'{v}:{m}', level=autologging.TRACE)
 
     def get_data(self, _map, _type, filter_name, params, history=False):
+        params = {k:v for k,v in params.items() if k and v}
+        self._trace_local('params', params)
         api_response = self.schema_api.get_schema(_map, _type)
 
         if api_response:
