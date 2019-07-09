@@ -1,3 +1,7 @@
+import sys
+import logging
+
+import autologging
 import falcon
 
 from .reader import DomainReader
@@ -6,6 +10,12 @@ from .writer import DomainWriter
 from .api import resources, settings
 from .api import utils
 
+
+# initializing logger
+logging.basicConfig(
+        level=autologging.TRACE,
+        stream=sys.stdout,
+        format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
 
 api = falcon.API(response_type=utils.APIResponse, request_type=utils.APIRequest)
 api_version = 1

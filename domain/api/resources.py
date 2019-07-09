@@ -1,5 +1,7 @@
 import json
 
+import autologging
+
 
 class BaseResource:
     """
@@ -9,6 +11,8 @@ class BaseResource:
         self.controller = controller
 
 
+@autologging.traced
+@autologging.logged
 class DomainBatchWriterResource(BaseResource):
     """
     """
@@ -20,6 +24,8 @@ class DomainBatchWriterResource(BaseResource):
         return resp.accepted()
 
 
+@autologging.traced
+@autologging.logged
 class DomainWriterResource(BaseResource):
     """
     """
@@ -34,6 +40,8 @@ class DomainWriterResource(BaseResource):
         return resp.accepted()
 
 
+@autologging.traced
+@autologging.logged
 class DomainReaderResource(BaseResource):
     """
     """
@@ -46,21 +54,19 @@ class DomainReaderResource(BaseResource):
         return resp.bad_request()
 
     def on_get(self, req, resp, _map, _type, _filter):
-        print(f'DomainReaderResource::on_get::request uri {req.uri}')
-        print(f'DomainReaderResource::on_get::arguments::map::{_map} type::{_type} filter::{_filter}')
         if _map:
             try:
                 data = self.controller.get_data(_map, _type, _filter, req.params)
-                print(f'DomainReaderResource::on_get::data:: {len(data) if data else 0}')
                 return resp.json(data)
             except Exception as e:
-                print(f'DomainReaderResource::on_get::internal error::{e}')
                 # TODO: improve error details and log.
                 return resp.internal_error('error to be handled.')
 
         return resp.bad_request()
 
 
+@autologging.traced
+@autologging.logged
 class DomainReaderNoFilterResource(DomainReaderResource):
     """
     """
@@ -72,6 +78,8 @@ class DomainReaderNoFilterResource(DomainReaderResource):
         return super().on_get(req, resp, _map, _type, None)
 
 
+@autologging.traced
+@autologging.logged
 class DomainHistoryResource(BaseResource):
     """
     """

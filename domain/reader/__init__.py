@@ -1,4 +1,5 @@
 from peewee import SQL
+import autologging
 
 from platform_sdk.domain.schema.api import SchemaApi
 
@@ -6,30 +7,37 @@ from .mapper import RemoteField, RemoteMap
 from .sql import QueryParser
 
 
+@autologging.traced
+@autologging.logged
 class DomainReader:
     def __init__(self, orm, db_settings, schema_settings):
         self.orm = orm
         self.db = orm.db_factory('postgres', **db_settings)()
         self.schema_api = SchemaApi(schema_settings)
 
+        # wrapping local tracer
+        self._trace_local = lambda v, m:\
+            self._DomainReader__log.log(
+                msg=f'{v}:{m}', level=autologging.TRACE)
+
     def get_data(self, _map, _type, filter_name, params, history=False):
         api_response = self.schema_api.get_schema(_map, _type)
-        print(f'DomainReader::get_data:api_response::{api_response}')
+        self._trace_local('api_response', api_response)
 
         if api_response:
             model = self._get_model(
                 api_response['model'], api_response['fields'], history)
-            print(f'DomainReader::get_data:model::{model}')
+            self._trace_local('model', model)
 
             sql_filter = self._get_sql_filter(
                 filter_name, api_response['filters'])
-            print(f'DomainReader::get_data:sql_filter::{sql_filter}')
+            self._trace_local('sql_filter', sql_filter)
 
             sql_query = self._get_sql_query(sql_filter, params)
-            print(f'DomainReader::get_data:sql_query::{sql_query}')
+            self._trace_local('sql_query', sql_query)
 
             data = self._execute_query(model, sql_query)
-            print(f'DomainReader::get_data:data::{len(data) if data else 0}')
+            self._trace_local('data size', len(data or []))
 
             return self._get_response_data(data, api_response['fields'])
 
