@@ -4,7 +4,7 @@ import re
 class QueryParser:
     def __init__(self, query):
         self.query = query
-        self.regex = re.compile(r"\[\w.*([:\$]\w.*)]|([:\$]\w.*)")
+        self.regex = re.compile(r"\[.*?([:\$].*?)]|([:\$]\w*)")
         self.regex_cleaner = re.compile(r"[^a-zA-Z0-9]")
 
     def parse_param(self, place_holder, parameters):

@@ -71,25 +71,3 @@ def test_parse_optional_filter_with_no_parameters():
     assert query == ''
 
 
-def test_parse_sql():
-    sql_filter = '''(
-        :ExisteNomeCenario <> true [or nom_cenario in ($NomeCenario)] ) and 
-        (:ExisteIdUsina <> true [or id_usi in ($IdUsina)] ) 
-        [and id_tipocenario = :IdTipoCenario] 
-        [and id_situacaocenario = :IdSituacaoCenario] 
-        ORDER BY nom_cenario'''
-    parameters = {
-        'ExisteNomeCenario': 'False',
-        'NomeCenario': 'null',
-        'ExisteIdUsina': 'False',
-        'ExisteIdUsina': 'False',
-        'IdUsina': 'null',
-    }
-
-    # act
-    parser = QueryParser(sql_filter)
-    query, params = parser.parse(parameters)
-
-    # assert
-    assert params == ()
-    assert query == ''
