@@ -17,15 +17,19 @@ class QueryParser:
         value = None
 
         if opt_param:
-            opt_param = opt_param.replace(')', '') # this line can be removed once we fix the regex.
+            # this line can be removed once we fix the regex.
+            opt_param = opt_param.replace(')', '')
             value = parameters.get(opt_param[1:])
             holder = opt_param if value else place_holder.group()
         else:
-            req_param = req_param.replace(')', '') # this line can be removed once we fix the regex.
+            # this line can be removed once we fix the regex.
+            req_param = req_param.replace(')', '')
             value = parameters[req_param[1:]]
             holder = req_param
 
         if value and holder.startswith('$'):
+            if isinstance(value, str):
+                value = value.split(';')
             value = (*value, )
 
         return holder, value
@@ -46,7 +50,7 @@ class QueryParser:
 
     def parse(self, parameters):
         translator, values = self.make_translator(parameters)
-        pattern = re.compile("|".join([re.escape(k) for k in translator.keys()]))
+        pattern = re.compile("|".join([re.escape(k)
+                                       for k in translator.keys()]))
         query = pattern.sub(lambda m: translator[m.group(0)], self.query)
         return query.strip(), (*values,)
-

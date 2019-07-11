@@ -7,7 +7,7 @@ from .mapper import RemoteField, RemoteMap
 from .sql import QueryParser
 
 
-@autologging.traced
+@autologging.traced("get_data", exclude=True)
 @autologging.logged
 class DomainReader:
     def __init__(self, orm, db_settings, schema_settings):
