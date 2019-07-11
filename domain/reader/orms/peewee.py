@@ -30,6 +30,7 @@ class Peewee:
         'int': peewee.IntegerField,
         'timestamp': peewee.DateTimeField,
         'uuid': peewee.UUIDField,
+        'dec': peewee.DecimalField
     }
 
     FACTORIES = {

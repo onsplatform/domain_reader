@@ -24,6 +24,7 @@ class DomainReader:
         self._trace_local('###### get_data ######', _map)
         params = {k: v for k, v in params.items() if k and v and v != 'null'}
         self._trace_local('params', params)
+        import ipdb; ipdb.set_trace()
         api_response = self.schema_api.get_schema(_map, _type)
 
         if api_response:
