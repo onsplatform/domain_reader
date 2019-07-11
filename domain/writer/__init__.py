@@ -5,7 +5,7 @@ from platform_sdk.process_memory import ProcessMemoryApi
 
 class DomainWriter:
     QUERIES = {
-        'insert': 'INSERT INTO entities."{table}" ({columns}) VALUES ({values});',
+        'insert': 'INSERT INTO entities.{table} ({columns}) VALUES ({values});',
         'update': 'UPDATE entities."{table}" SET {values} WHERE id="{pk}";'
     }
 
