@@ -28,9 +28,11 @@ class QueryParser:
             holder = req_param
 
         if value and holder.startswith('$'):
+            
             if isinstance(value, str):
-                value = value.split(';')
-            value = (*value, )
+                value = (value.replace(';', ','),)
+            else:
+                value = (*value, )
 
         return holder, value
 
