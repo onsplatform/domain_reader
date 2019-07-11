@@ -21,7 +21,8 @@ class DomainReader:
                 msg=f'{v}:{m}', level=autologging.TRACE)
 
     def get_data(self, _map, _type, filter_name, params, history=False):
-        params = {k:v for k,v in params.items() if k and v and v != 'null'}
+        self._trace_local('###### get_data ######', _map)
+        params = {k: v for k, v in params.items() if k and v and v != 'null'}
         self._trace_local('params', params)
         api_response = self.schema_api.get_schema(_map, _type)
 
@@ -50,6 +51,7 @@ class DomainReader:
         if (sql_query and sql_query['sql_query']):
             sql = SQL(sql_query['sql_query'], sql_query['query_params'])
             return query.where(sql)
+        return query
 
     def _get_sql_query(self, sql_filter, params):
         if sql_filter:
