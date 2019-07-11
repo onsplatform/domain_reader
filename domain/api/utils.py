@@ -1,6 +1,7 @@
 import json
 from uuid import UUID
 from datetime import datetime
+from decimal import Decimal
 
 import falcon
 
@@ -15,6 +16,8 @@ class UUIDEncoder(json.JSONEncoder):
             return str(obj)
         if isinstance(obj, datetime):
             return obj.isoformat()
+        if isinstance(obj, Decimal):
+            return float(obj)
         return json.JSONEncoder.default(self, obj)
 
 
