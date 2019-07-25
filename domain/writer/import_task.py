@@ -1,0 +1,9 @@
+from . import DomainWriter
+from domain.api import settings
+from celery import Celery
+
+app = Celery(settings.CELERY['name'], broker=settings.CELERY['broker'])
+@app.task
+def import_data(entities):
+    domain_writer = DomainWriter(settings.ORM, settings.DATABASE, settings.PROCESS_MEMORY)
+    domain_writer.import_data(entities)
