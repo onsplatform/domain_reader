@@ -2,6 +2,11 @@ import os
 
 from domain.reader.orms.peewee import Peewee
 
+CELERY = { 
+    'broker': os.environ.get('CELERY_BROKER', 'pyamqp://guest@10.21.6.237//'),
+    'name': 'task'
+}
+
 
 DATABASE = {
     'database': os.environ.get('POSTGRES_DB', 'platform_domain_schema'),

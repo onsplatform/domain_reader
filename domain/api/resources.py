@@ -1,6 +1,6 @@
 import json
-
 import autologging
+from domain.writer import import_task
 
 
 class BaseResource:
@@ -18,8 +18,7 @@ class DomainBatchWriterResource(BaseResource):
     """
 
     def on_post(self, req, resp):
-        if not self.controller.import_data(req.json()):
-            return resp.bad_request()
+        import_task.import_data.delay(req.json())
 
         return resp.accepted()
 
@@ -56,7 +55,8 @@ class DomainReaderResource(BaseResource):
     def on_get(self, req, resp, _map, _type, _filter):
         if _map:
             try:
-                data = self.controller.get_data(_map, _type, _filter, req.params)
+                data = self.controller.get_data(
+                    _map, _type, _filter, req.params)
                 return resp.json(data)
             except Exception as e:
                 # TODO: improve error details and log.
