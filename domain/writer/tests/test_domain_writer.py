@@ -115,7 +115,7 @@ def test_get_update_sql(db, db_settings, process_memory_settings):
     sql = domain_writer._get_update_sql(entity_id, table, entity, fields)
 
     # asserts
-    assert sql == 'UPDATE entities.tb_tarefa_retificacao SET nome=\'teste retificação set 2014\',situacao=\'aplicado\' WHERE id=\'88769548-eaf9-4988-8ec2-f9662a23fb5b\';'
+    assert sql == 'UPDATE entities.\"tb_tarefa_retificacao\" SET nome=\'teste retificação set 2014\',situacao=\'aplicado\' WHERE id=\"88769548-eaf9-4988-8ec2-f9662a23fb5b\";'
 
 
 def test_get_insert_sql(db, db_settings, process_memory_settings):
@@ -331,8 +331,8 @@ def test_get_sql(db, db_settings, process_memory_settings):
     bulk_sql = list(bulk_sql)
     assert len(bulk_sql) == 4
     assert bulk_sql == [
-        "UPDATE entities.tb_tarefa_retificacao SET nome='teste retificação set 2014',situacao='aplicado' WHERE id='88769548-eaf9-4988-8ec2-f9662a23fb5b';",
-        "UPDATE entities.tb_tarefa_retificacao SET nome='teste retificação set 2014',situacao='iniciada' WHERE id='b228317b-1e10-4ed2-bf1a-41d5acdbe7e8';",
+        "UPDATE entities.\"tb_tarefa_retificacao\" SET nome='teste retificação set 2014',situacao='aplicado' WHERE id=\"88769548-eaf9-4988-8ec2-f9662a23fb5b\";",
+        "UPDATE entities.\"tb_tarefa_retificacao\" SET nome='teste retificação set 2014',situacao='iniciada' WHERE id=\"b228317b-1e10-4ed2-bf1a-41d5acdbe7e8\";",
         "INSERT INTO entities.tb_unidade_geradora (id_uge,pot_disp,data_inicio_operacao,id_usina) VALUES ('ALUXG-0UG1','527','1997-08-22T00:00:00.000Z','ALUXG');",
         "INSERT INTO entities.tb_unidade_geradora (id_uge,pot_disp,data_inicio_operacao,id_usina) VALUES ('ALUXG-0UG2','527','1996-12-20T00:00:00.000Z','ALUXG');"
     ]

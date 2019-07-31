@@ -3,7 +3,7 @@ import os
 from domain.reader.orms.peewee import Peewee
 
 CELERY = { 
-    'broker': os.environ.get('CELERY_BROKER', 'pyamqp://guest@10.21.6.237//'),
+    'broker': os.environ.get('CELERY_BROKER', 'pyamqp://guest@localhost//'),
     'name': 'task'
 }
 
@@ -12,7 +12,7 @@ DATABASE = {
     'database': os.environ.get('POSTGRES_DB', 'platform_domain_schema'),
     'user': os.environ.get('POSTGRES_USER', 'postgres'),
     'password': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
-    'host': os.environ.get('POSTGRES_HOST', 'postgres'),
+    'host': os.environ.get('POSTGRES_HOST', '10.24.1.251'),
     'port': os.environ.get('POSTGRES_PORT', 5432),
 }
 
