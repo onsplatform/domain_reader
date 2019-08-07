@@ -36,6 +36,6 @@ api.add_route(
 api.add_route(
     settings.BASE_URI[api_version] + '{_map}/{_type}/history/{id}', domain_history_resource)
 api.add_route(
-    settings.BASE_URI_WRITER[api_version] + '{_map}/persist', domain_writer_resource)
+    settings.BASE_URI[api_version] + '{_map}/persist', domain_writer_resource)
 api.add_route(
     settings.BASE_URI_WRITER[api_version] + 'batch/persist', domain_batch_writer_resource)

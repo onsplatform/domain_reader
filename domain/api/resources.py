@@ -84,9 +84,10 @@ class DomainHistoryResource(BaseResource):
     """
     """
 
-    def on_get(self, req, resp, _map, type, id):
+    def on_get(self, req, resp, _map, _type, id):
         if _map:
-            data = self.controller.get_data(_map, None, req.params, True)
+            params = ({'id': id})
+            data = self.controller.get_data(_map, _type, None, params, True)
             return resp.json(data)
 
         return resp.bad_request()

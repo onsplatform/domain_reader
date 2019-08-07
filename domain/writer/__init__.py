@@ -6,7 +6,7 @@ from platform_sdk.process_memory import ProcessMemoryApi
 class DomainWriter:
     QUERIES = {
         'insert': 'INSERT INTO entities.{table} ({columns}) VALUES ({values});',
-        'update': 'UPDATE entities."{table}" SET {values} WHERE id="{pk}";'
+        'update': 'UPDATE entities.{table} SET {values} WHERE id=\'{pk}\';'
     }
 
     HOLDERS = {
@@ -61,19 +61,20 @@ class DomainWriter:
 
     def _get_sql(self, data, schemas):
         for _type, entities in data.items():
-            schema = schemas[_type]
+            schema = self._get_schema(schemas)[_type]
             table = schema['table']
             fields = schema['fields']
             for entity in entities:
-                instance_id = objects.get(entity, '_metadata.instance_id')
-                if (instance_id):
-                    yield self._get_update_sql(entity['id'], table, entity, fields)
-                    continue
+                changeTrack = objects.get(entity, '_metadata.changeTrack')
+                if (changeTrack):
+                    if (changeTrack == 'update'):
+                        yield self._get_update_sql(entity['id'], table, entity, fields)
+                        continue
 
-                yield self._get_insert_sql(table, entity, fields)
+                    yield self._get_insert_sql(table, entity, fields)
 
     def _get_update_sql(self, instance_id, table, entity, fields):
-        values = [f"{f['column']}='{entity[f['name']]}'" for f in fields]
+        values = [f"{field['column']}='{entity[field['name']]}'" for field in fields if field['name'] in entity]
 
         return self.QUERIES['update'].format(
             table=table,
@@ -81,8 +82,8 @@ class DomainWriter:
             pk=instance_id)
 
     def _get_insert_sql(self, table, entity, fields):
-        columns = [field['column'] for field in fields]
-        values = [self._mogrify(entity[f['name']]) for f in fields]
+        columns = [field['column'] for field in fields if field['name'] in entity]
+        values = [self._mogrify(entity[field['name']]) for field in fields if field['name'] in entity]
         return self.QUERIES['insert'].format(
             table=table,
             columns=str.join(',', columns),
