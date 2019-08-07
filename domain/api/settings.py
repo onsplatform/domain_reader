@@ -21,7 +21,7 @@ SCHEMA = {
 }
 
 PROCESS_MEMORY = {
-    'api_url': os.environ.get('PROCESS_MEMORY_URI', 'http://process_memory/'),
+    'api_url': os.environ.get('PROCESS_MEMORY_URI', 'http://process_memory:9091/'),
 }
 
 ORM = Peewee
