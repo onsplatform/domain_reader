@@ -77,7 +77,7 @@ class DomainWriter:
                 '''
                 now = datetime.now()
                 entity['meta_instance_id'] = instanceId
-                entity['modified'] = datetime.timestamp(now)
+                entity['modified'] = now
                 # entity['branch'] = objects.get(entity, '_metadata.branch') uid?
 
                 changeTrack = objects.get(entity, '_metadata.changeTrack')
