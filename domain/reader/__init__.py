@@ -29,12 +29,10 @@ class DomainReader:
         if api_response:
             self._trace_local('api_response', api_response.get('id'))
 
-            model = self._get_model(
-                api_response['model'], api_response['fields'], history)
+            model = self._get_model(api_response['model'], api_response['fields'], history)
             self._trace_local('model', model)
 
-            sql_filter = self._get_sql_filter(
-                filter_name, api_response['filters'])
+            sql_filter = self._get_sql_filter(filter_name, api_response['filters'])
             self._trace_local('sql_filter', sql_filter)
 
             sql_query = self._get_sql_query(sql_filter, params)
@@ -46,6 +44,10 @@ class DomainReader:
             return self._get_response_data(data, api_response['fields'])
 
     def _execute_query(self, model, sql_query):  # pragma: no cover
+        # TODO: this is the best place?
+        if (self.db.is_closed()):
+            self.db.connect()
+
         proxy_model = model.build(self.db)
         try:
             query = proxy_model.select()
@@ -60,7 +62,6 @@ class DomainReader:
         if sql_filter:
             parser = QueryParser(sql_filter)
             query, params = parser.parse(params)
-
             return {
                 'sql_query': query,
                 'query_params': params
@@ -68,16 +69,33 @@ class DomainReader:
 
     def _get_response_data(self, entities, fields):
         if entities:
-            return [{f['alias']: getattr(e, f['alias']) for f in fields}
-                    for e in entities]
+            ret = []
+            for e in entities:
+                dic = {}
+                meta = {}
+                for f in fields:
+                    if f['alias'].startswith('_metadata.'):
+                        meta[f['alias'][10:]] = getattr(e, f['alias'])
+                    else:
+                        dic[f['alias']] = getattr(e, f['alias'])
+                dic['metadata'] = meta
+                ret.append(dic)
+            return ret
 
     def _get_fields(self, fields):
         return [RemoteField(
             f['alias'], f['field_type'], f['column_name']) for f in fields]
 
     def _get_model(self, model, fields, history=False):
-        return RemoteMap(
-            model['name'], model['table'], self._get_fields(fields), self.orm, history)
+        ''' 
+        TODO: move to domain_schema
+        '''
+        fields.append({'field_type': 'boolean','column_name': 'deleted', 'alias': '_metadata.deleted'})
+        fields.append({'field_type': 'varchar','column_name': 'meta_instance_id', 'alias': '_metadata.instance_id'})
+        fields.append({'field_type': 'timestamp','column_name': 'modified', 'alias': '_metadata.modified_at'})
+        fields.append({'field_type': 'varchar','column_name': 'from_id', 'alias': '_metadata.from_id'})
+        fields.append({'field_type': 'varchar','column_name': 'branch', 'alias': '_metadata.branch'})
+        return RemoteMap(model['name'], model['table'], self._get_fields(fields), self.orm, history)
 
     def _get_sql_filter(self, filter_name, filters):
         if filters and filter_name:

@@ -1,4 +1,5 @@
 from pydash import objects
+from datetime import datetime
 
 from platform_sdk.process_memory import ProcessMemoryApi
 
@@ -45,13 +46,18 @@ class DomainWriter:
         data = self.process_memory_api.get_process_memory_data(process_memory_id)
         content = objects.get(data, 'map.content')
         entities = objects.get(data, 'dataset.entities')
+        instanceId = objects.get(data, 'instanceId')
 
         if content and entities:
-            bulk_sql = self._get_sql(entities, content)
+            bulk_sql = self._get_sql(entities, content, instanceId)
             self._execute_query(bulk_sql)
             return True
 
     def _execute_query(self, bulk_sql):  # pragma: no cover
+        # TODO: this is the best place?
+        if (self.db.is_closed()):
+            self.db.connect()
+            
         with self.db.atomic():
             for sql in bulk_sql:
                 try:
@@ -59,12 +65,21 @@ class DomainWriter:
                 except Exception as e:
                     print("sql error: " + str(e))
 
-    def _get_sql(self, data, schemas):
+    def _get_sql(self, data, schemas, instanceId):
         for _type, entities in data.items():
             schema = self._get_schema(schemas)[_type]
             table = schema['table']
             fields = schema['fields']
             for entity in entities:
+
+                ''' 
+                TODO: move to domain_schema
+                '''
+                now = datetime.now()
+                entity['meta_instance_id'] = instanceId
+                entity['modified'] = datetime.timestamp(now)
+                # entity['branch'] = objects.get(entity, '_metadata.branch') uid?
+
                 changeTrack = objects.get(entity, '_metadata.changeTrack')
                 if (changeTrack):
                     if (changeTrack == 'update'):
@@ -94,6 +109,15 @@ class DomainWriter:
         schema = {}
         for key in content.keys():
             fields = content[key]['fields']
+            
+            ''' 
+            TODO: move to domain_schema
+            '''
+            fields['deleted'] = {'name': 'deleted', 'column': 'deleted'}
+            fields['meta_instance_id'] = {'name': 'meta_instance_id', 'column': 'meta_instance_id'}
+            fields['modified'] = {'name': 'modified', 'column': 'modified'}
+            fields['from_id'] = {'name': 'from_id', 'column': 'from_id'}
+
             schema[key] = {
                 'table': content[key]['model'],
                 'fields':  [{'name': k, 'column': v['column']} for k, v in fields.items()]
