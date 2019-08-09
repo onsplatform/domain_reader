@@ -78,7 +78,7 @@ class DomainReader:
                         meta[f['alias'][10:]] = getattr(e, f['alias'])
                     else:
                         dic[f['alias']] = getattr(e, f['alias'])
-                dic['metadata'] = meta
+                dic['_metadata'] = meta
                 ret.append(dic)
             return ret
 
