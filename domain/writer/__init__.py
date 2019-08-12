@@ -81,8 +81,10 @@ class DomainWriter:
                 # entity['branch'] = objects.get(entity, '_metadata.branch') uid?
 
                 changeTrack = objects.get(entity, '_metadata.changeTrack')
-                if (changeTrack):
-                    if (changeTrack == 'update'):
+                if changeTrack:
+                    if changeTrack == 'update' or changeTrack == 'destroy':
+                        import pdb; pdb.set_trace()
+                        entity['deleted'] = changeTrack == 'destroy'
                         yield self._get_update_sql(entity['id'], table, entity, fields)
                         continue
 

@@ -70,14 +70,14 @@ class DomainReader:
     def _get_response_data(self, entities, fields):
         if entities:
             ret = []
-            for e in entities:
+            for entity in entities:
                 dic = {}
                 meta = {}
-                for f in fields:
-                    if f['alias'].startswith('_metadata.'):
-                        meta[f['alias'][10:]] = getattr(e, f['alias'])
+                for field in fields:
+                    if field['alias'].startswith('_metadata.'):
+                        meta[field['alias'][10:]] = getattr(entity, field['alias'])
                     else:
-                        dic[f['alias']] = getattr(e, f['alias'])
+                        dic[field['alias']] = getattr(entity, field['alias'])
                 dic['_metadata'] = meta
                 ret.append(dic)
             return ret
@@ -95,6 +95,7 @@ class DomainReader:
         fields.append({'field_type': 'timestamp','column_name': 'modified', 'alias': '_metadata.modified_at'})
         fields.append({'field_type': 'varchar','column_name': 'from_id', 'alias': '_metadata.from_id'})
         fields.append({'field_type': 'varchar','column_name': 'branch', 'alias': '_metadata.branch'})
+        
         return RemoteMap(model['name'], model['table'], self._get_fields(fields), self.orm, history)
 
     def _get_sql_filter(self, filter_name, filters):
