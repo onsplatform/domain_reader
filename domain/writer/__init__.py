@@ -46,18 +46,18 @@ class DomainWriter:
         data = self.process_memory_api.get_process_memory_data(process_memory_id)
         content = objects.get(data, 'map.content')
         entities = objects.get(data, 'dataset.entities')
-        instanceId = objects.get(data, 'instanceId')
+        instance_id = objects.get(data, 'instanceId')
 
         if content and entities:
-            bulk_sql = self._get_sql(entities, content, instanceId)
+            bulk_sql = self._get_sql(entities, content, instance_id)
             self._execute_query(bulk_sql)
             return True
 
     def _execute_query(self, bulk_sql):  # pragma: no cover
         # TODO: this is the best place?
-        if (self.db.is_closed()):
+        if self.db.is_closed():
             self.db.connect()
-            
+
         with self.db.atomic():
             for sql in bulk_sql:
                 try:
@@ -65,7 +65,7 @@ class DomainWriter:
                 except Exception as e:
                     print("sql error: " + str(e))
 
-    def _get_sql(self, data, schemas, instanceId):
+    def _get_sql(self, data, schemas, instance_id):
         for _type, entities in data.items():
             schema = self._get_schema(schemas)[_type]
             table = schema['table']
@@ -76,19 +76,17 @@ class DomainWriter:
                 TODO: move to domain_schema
                 '''
                 now = datetime.now()
-                entity['meta_instance_id'] = instanceId
+                entity['meta_instance_id'] = instance_id
                 entity['modified'] = now
                 # entity['branch'] = objects.get(entity, '_metadata.branch') uid?
 
-                changeTrack = objects.get(entity, '_metadata.changeTrack')
-                if changeTrack:
-                    if changeTrack == 'update' or changeTrack == 'destroy':
-                        import pdb; pdb.set_trace()
-                        entity['deleted'] = changeTrack == 'destroy'
+                change_track = objects.get(entity, '_metadata.changeTrack')
+                if change_track:
+                    if change_track in ['update', 'destroy'] and instance_id:
+                        entity['deleted'] = change_track == 'destroy'
                         yield self._get_update_sql(entity['id'], table, entity, fields)
-                        continue
-
-                    yield self._get_insert_sql(table, entity, fields)
+                    if change_track == 'create' and not instance_id:
+                        yield self._get_insert_sql(table, entity, fields)
 
     def _get_update_sql(self, instance_id, table, entity, fields):
         values = [f"{field['column']}='{entity[field['name']]}'" for field in fields if field['name'] in entity]
@@ -111,7 +109,7 @@ class DomainWriter:
         schema = {}
         for key in content.keys():
             fields = content[key]['fields']
-            
+
             ''' 
             TODO: move to domain_schema
             '''
