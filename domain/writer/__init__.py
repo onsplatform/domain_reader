@@ -46,10 +46,10 @@ class DomainWriter:
         data = self.process_memory_api.get_process_memory_data(process_memory_id)
         content = objects.get(data, 'map.content')
         entities = objects.get(data, 'dataset.entities')
-        instanceId = objects.get(data, 'instanceId')
+        instance_id = objects.get(data, 'instanceId')
 
         if content and entities:
-            bulk_sql = self._get_sql(entities, content, instanceId)
+            bulk_sql = self._get_sql(entities, content, instance_id)
             self._execute_query(bulk_sql)
             return True
 
@@ -83,12 +83,10 @@ class DomainWriter:
                 change_track = objects.get(entity, '_metadata.changeTrack')
                 if change_track:
                     if change_track in ['update', 'destroy'] and instance_id:
-                        import pdb;
-                        pdb.set_trace()
                         entity['deleted'] = change_track == 'destroy'
                         yield self._get_update_sql(entity['id'], table, entity, fields)
                         continue
-                    if not instance_id:
+                    if change_track == 'create':
                         yield self._get_insert_sql(table, entity, fields)
                         continue
 

@@ -15,6 +15,7 @@ downloads/
 eggs/
 .env/
 .vscode/
+.idea/
 .pytest_cache/
 .eggs/
 lib/

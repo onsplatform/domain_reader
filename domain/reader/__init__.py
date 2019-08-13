@@ -22,7 +22,8 @@ class DomainReader:
 
     def get_data(self, _map, _type, filter_name, params, history=False):
         self._trace_local('###### get_data ######', _map)
-        params = {k: v for k, v in params.items() if k and v and v != 'null'}
+
+        params = {k: v for k, v in params.items() if k and v}
         self._trace_local('params', params)
         api_response = self.schema_api.get_schema(_map, _type)
 
@@ -44,22 +45,22 @@ class DomainReader:
             return self._get_response_data(data, api_response['fields'])
 
     def _execute_query(self, model, sql_query):  # pragma: no cover
-        # TODO: this is the best place?
-        if (self.db.is_closed()):
-            self.db.connect()
-
-        proxy_model = model.build(self.db)
         try:
+            # TODO: this is the best place?
+            if (self.db.is_closed()):
+                self.db.connect()
+            proxy_model = model.build(self.db)
             query = proxy_model.select()
             if (sql_query and sql_query['sql_query']):
                 sql = SQL(sql_query['sql_query'], sql_query['query_params'])
                 query = query.where(sql)
-        except Exception as e:
+        except:
+            self.db.close()
             self._trace_local('_execute_query ERROR: ', e)
         return query
 
     def _get_sql_query(self, sql_filter, params):
-        if sql_filter:
+        if sql_filter and params:
             parser = QueryParser(sql_filter)
             query, params = parser.parse(params)
             return {
