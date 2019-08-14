@@ -7,7 +7,6 @@ from .mapper import RemoteField, RemoteMap
 from .sql import QueryParser
 
 
-@autologging.traced("get_data", exclude=True)
 @autologging.logged
 class DomainReader:
     def __init__(self, orm, db_settings, schema_settings):
@@ -46,20 +45,23 @@ class DomainReader:
 
     def _execute_query(self, model, sql_query):  # pragma: no cover
         try:
-            # TODO: this is the best place?
-            if (self.db.is_closed()):
+            # TODO: is this the best place?
+            if self.db.is_closed():
                 self.db.connect()
+
             proxy_model = model.build(self.db)
             query = proxy_model.select()
-            if (sql_query and sql_query['sql_query']):
-                sql = SQL(sql_query['sql_query'], sql_query['query_params'])
-                query = query.where(sql)
-        except:
-            self.db.close()
+            if sql_query and sql_query['sql_query']:
+                sql_statement = SQL(sql_query['sql_query'], sql_query['query_params'])
+                query = query.where(sql_statement)
+        except Exception as e:
+            if not self.db.is_closed():
+                self.db.close()
             self._trace_local('_execute_query ERROR: ', e)
         return query
 
-    def _get_sql_query(self, sql_filter, params):
+    @staticmethod
+    def _get_sql_query(sql_filter, params):
         if sql_filter and params:
             parser = QueryParser(sql_filter)
             query, params = parser.parse(params)
@@ -68,7 +70,8 @@ class DomainReader:
                 'query_params': params
             }
 
-    def _get_response_data(self, entities, fields):
+    @staticmethod
+    def _get_response_data(entities, fields):
         if entities:
             ret = []
             for entity in entities:
@@ -83,22 +86,24 @@ class DomainReader:
                 ret.append(dic)
             return ret
 
-    def _get_fields(self, fields):
+    @staticmethod
+    def _get_fields(fields):
         return [RemoteField(
             f['alias'], f['field_type'], f['column_name']) for f in fields]
 
     def _get_model(self, model, fields, history=False):
-        ''' 
+        """
         TODO: move to domain_schema
-        '''
+        """
         fields.append({'field_type': 'boolean','column_name': 'deleted', 'alias': '_metadata.deleted'})
         fields.append({'field_type': 'varchar','column_name': 'meta_instance_id', 'alias': '_metadata.instance_id'})
         fields.append({'field_type': 'timestamp','column_name': 'modified', 'alias': '_metadata.modified_at'})
         fields.append({'field_type': 'varchar','column_name': 'from_id', 'alias': '_metadata.from_id'})
         fields.append({'field_type': 'varchar','column_name': 'branch', 'alias': '_metadata.branch'})
-        
+
         return RemoteMap(model['name'], model['table'], self._get_fields(fields), self.orm, history)
 
-    def _get_sql_filter(self, filter_name, filters):
+    @staticmethod
+    def _get_sql_filter(filter_name, filters):
         if filters and filter_name:
             return next(f['expression'] for f in filters if f['name'] == filter_name)

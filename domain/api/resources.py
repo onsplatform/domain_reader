@@ -9,6 +9,10 @@ class BaseResource:
 
     def __init__(self, controller):
         self.controller = controller
+        # wrapping local tracer
+        self._trace_local = lambda v, m: \
+            self._DomainReaderResource__log.log(
+                msg=f'{v}:{m}', level=autologging.TRACE)
 
 
 @autologging.traced
@@ -59,8 +63,8 @@ class DomainReaderResource(BaseResource):
                     _map, _type, _filter, req.params)
                 return resp.json(data)
             except Exception as e:
-                # TODO: improve error details and log.
-                return resp.internal_error('error to be handled.')
+                self._trace_local('###### ERROR ######', e)
+                return resp.internal_error("error, see stack")
 
         return resp.bad_request()
 
