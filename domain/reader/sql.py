@@ -30,7 +30,7 @@ class QueryParser:
         if value and holder.startswith('$'):
             
             if isinstance(value, str):
-                value = (value.replace(';', ','),)
+                value = tuple(value.split(';'),)
             else:
                 value = (*value, )
 
