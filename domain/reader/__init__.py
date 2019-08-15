@@ -26,39 +26,48 @@ class DomainReader:
     def get_data(self, _map, _type, filter_name, params, history=False):
         self._trace_local('###### get_data ######', _map)
 
-        params = {k: v for k, v in params.items() if k and v}
-        self._trace_local('params', params)
         api_response = self.schema_api.get_schema(_map, _type)
+        self._trace_local('schema map id', api_response.get('id'))
 
         if api_response:
-            self._trace_local('schema map id', api_response.get('id'))
-
             model = self._get_model(api_response['model'], api_response['fields'], history)
             self._trace_local('model', model)
 
-            sql_filter = self._get_sql_filter(filter_name, api_response['filters'])
+            sql_filter = self._get_sql_filter(filter_name, api_response['filters'], history)
             self._trace_local('sql_filter', sql_filter)
+
+            page = params.get('page')
+            page_size = params.get('page_size')
+            params = {k: v for k, v in params.items() if k and v}
+            self._trace_local('params', params)
 
             sql_query = self._get_sql_query(sql_filter, params)
             self._trace_local('sql_query', sql_query)
 
-            data = self._execute_query(model, sql_query)
+            data = self._execute_query(model, sql_query, page, page_size)
 
             return self._get_response_data(data, api_response['fields'])
 
-    def _execute_query(self, model, sql_query):  # pragma: no cover
+    def _execute_query(self, model, sql_query, page, page_size=20):  # pragma: no cover
         try:
+            if self.db.is_closed():
+                self.db.connect()
+
             proxy_model = model.build(self.db)
             query = proxy_model.select()
+
             if sql_query and sql_query['sql_query']:
                 sql_statement = SQL(sql_query['sql_query'], sql_query['query_params'])
                 query = query.where(sql_statement)
+
+            if page and page_size:
+                query = query.paginate(int(page), int(page_size))
 
             self._trace_local('data size', len(query or []))
             return query
         except Exception as e:
             self.db.rollback()
-            self._trace_local('##### _execute_query ##### ERROR: ', e)
+            self._trace_local('##### _execute_query ##### ERROR ', e)
 
     @staticmethod
     def _get_sql_query(sql_filter, params):
@@ -104,6 +113,9 @@ class DomainReader:
         return RemoteMap(model['name'], model['table'], self._get_fields(fields), self.orm, history)
 
     @staticmethod
-    def _get_sql_filter(filter_name, filters):
+    def _get_sql_filter(filter_name, filters, history):
+        if history:
+            return 'id = :id'
+
         if filters and filter_name:
             return next(f['expression'] for f in filters if f['name'] == filter_name)
