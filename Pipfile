@@ -12,6 +12,7 @@ coverage = "*"
 pytest-cov = "*"
 waitress = "*"
 autopep8 = "*"
+colorama = "*"
 
 [packages]
 requests = "*"
