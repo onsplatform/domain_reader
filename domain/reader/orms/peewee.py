@@ -1,5 +1,6 @@
 import peewee
 
+from playhouse.pool import PooledPostgresqlExtDatabase
 
 class PeeweeSqliteDbFactory:
     def __init__(self, path):
@@ -14,7 +15,7 @@ class PostgresDbFactory:
         self.kwargs = kwargs
 
     def __call__(self):
-        return peewee.PostgresqlDatabase(**self.kwargs)
+        return PooledPostgresqlExtDatabase(**self.kwargs, max_connections=30, stale_timeout=300)
 
 
 class Peewee:

@@ -50,24 +50,24 @@ class DomainReader:
 
     def _execute_query(self, model, sql_query, page, page_size=20):  # pragma: no cover
         try:
-            if self.db.is_closed():
-                self.db.connect()
+            self.db.connect(reuse_if_open=True)
+            with self.db.atomic():
+                proxy_model = model.build(self.db)
+                query = proxy_model.select()
 
-            proxy_model = model.build(self.db)
-            query = proxy_model.select()
+                if sql_query and sql_query['sql_query']:
+                    sql_statement = SQL('(deleted is null or not deleted) and ' + sql_query['sql_query'], sql_query['query_params'])
+                    query = query.where(sql_statement)
 
-            if sql_query and sql_query['sql_query']:
-                sql_statement = SQL(sql_query['sql_query'], sql_query['query_params'])
-                query = query.where(sql_statement)
+                if page and page_size:
+                    query = query.paginate(int(page), int(page_size))
 
-            if page and page_size:
-                query = query.paginate(int(page), int(page_size))
-
-            self._trace_local('data size', len(query or []))
-            return query
+                self._trace_local('data size', len(query or []))
+                return query
         except Exception as e:
-            self.db.rollback()
             self._trace_local('##### _execute_query ##### ERROR ', e)
+        finally:
+            self.db.close()
 
     @staticmethod
     def _get_sql_query(sql_filter, params):

@@ -54,16 +54,19 @@ class DomainWriter:
             return True
 
     def _execute_query(self, bulk_sql):  # pragma: no cover
-        # TODO: this is the best place?
-        if self.db.is_closed():
-            self.db.connect()
-
-        with self.db.atomic():
-            for sql in bulk_sql:
-                try:
-                    self.db.execute_sql(sql)
-                except Exception as e:
-                    print("sql error: " + str(e))
+        try:
+            self.db.connect(reuse_if_open=True)
+            with self.db.atomic():
+                for sql in bulk_sql:
+                    try:
+                        self.db.execute_sql(sql)
+                    except Exception as e:
+                        print("sql error: " + str(e))
+                        raise e
+        except Exception as e:
+            self._trace_local('##### _execute_query ##### ERROR ', e)
+        finally:
+            self.db.close()
 
     def _get_sql(self, data, schemas, instance_id):
         for _type, entities in data.items():
