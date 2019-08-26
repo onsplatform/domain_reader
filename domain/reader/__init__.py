@@ -30,7 +30,7 @@ class DomainReader:
         self._trace_local('schema map id', api_response.get('id'))
 
         if api_response:
-            model = self._get_model(api_response['model'], api_response['fields'], history)
+            model = self._get_model(api_response['model'], api_response['fields'] + api_response['metadata'], history)
             self._trace_local('model', model)
 
             sql_filter = self._get_sql_filter(filter_name, api_response['filters'], history)
@@ -45,8 +45,7 @@ class DomainReader:
             self._trace_local('sql_query', sql_query)
 
             data = self._execute_query(model, sql_query, page, page_size)
-
-            return self._get_response_data(data, api_response['fields'])
+            return list(self._get_response_data(data, api_response['fields'], api_response['metadata']))
 
     def _execute_query(self, model, sql_query, page, page_size=20):  # pragma: no cover
         try:
@@ -56,7 +55,8 @@ class DomainReader:
                 query = proxy_model.select()
 
                 if sql_query and sql_query['sql_query']:
-                    sql_statement = SQL('(deleted is null or not deleted) and ' + sql_query['sql_query'], sql_query['query_params'])
+                    sql_statement = SQL('(deleted is null or not deleted) and ' + sql_query['sql_query'],
+                                        sql_query['query_params'])
                     query = query.where(sql_statement)
 
                 if page and page_size:
@@ -80,20 +80,12 @@ class DomainReader:
             }
 
     @staticmethod
-    def _get_response_data(entities, fields):
+    def _get_response_data(entities, fields, metadata):
         if entities:
-            ret = []
             for entity in entities:
-                dic = {}
-                meta = {}
-                for field in fields:
-                    if field['alias'].startswith('_metadata.'):
-                        meta[field['alias'][10:]] = getattr(entity, field['alias'])
-                    else:
-                        dic[field['alias']] = getattr(entity, field['alias'])
-                dic['_metadata'] = meta
-                ret.append(dic)
-            return ret
+                dic = {field['alias']: getattr(entity, field['alias']) for field in fields}
+                dic['_metadata'] = {meta['alias']: getattr(entity, meta['alias']) for meta in metadata}
+                yield dic
 
     @staticmethod
     def _get_fields(fields):
@@ -101,15 +93,6 @@ class DomainReader:
             f['alias'], f['field_type'], f['column_name']) for f in fields]
 
     def _get_model(self, model, fields, history=False):
-        """
-        TODO: move to domain_schema
-        """
-        fields.append({'field_type': 'boolean', 'column_name': 'deleted', 'alias': '_metadata.deleted'})
-        fields.append({'field_type': 'varchar', 'column_name': 'meta_instance_id', 'alias': '_metadata.instance_id'})
-        fields.append({'field_type': 'timestamp', 'column_name': 'modified', 'alias': '_metadata.modified_at'})
-        fields.append({'field_type': 'varchar', 'column_name': 'from_id', 'alias': '_metadata.from_id'})
-        fields.append({'field_type': 'varchar', 'column_name': 'branch', 'alias': '_metadata.branch'})
-
         return RemoteMap(model['name'], model['table'], self._get_fields(fields), self.orm, history)
 
     @staticmethod

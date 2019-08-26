@@ -74,10 +74,6 @@ class DomainWriter:
             table = schema['table']
             fields = schema['fields']
             for entity in entities:
-
-                ''' 
-                TODO: move to domain_schema
-                '''
                 now = datetime.now()
                 entity['meta_instance_id'] = instance_id
                 entity['modified'] = now
@@ -85,13 +81,11 @@ class DomainWriter:
 
                 change_track = objects.get(entity, '_metadata.changeTrack')
                 if change_track:
-                    if change_track in ['update', 'destroy'] and instance_id:
+                    if change_track in {'update', 'destroy'} and instance_id:
                         entity['deleted'] = change_track == 'destroy'
                         yield self._get_update_sql(entity['id'], table, entity, fields)
-                        continue
                     if change_track == 'create':
                         yield self._get_insert_sql(table, entity, fields)
-                        continue
 
     def _get_update_sql(self, instance_id, table, entity, fields):
         values = [f"{field['column']}='{entity[field['name']]}'" for field in fields if field['name'] in entity]
