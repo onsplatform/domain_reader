@@ -1,0 +1,41 @@
+FROM python:3.7-stretch
+
+#
+# SETUP CONTAINER
+#
+RUN apt-get -y update && apt-get -y upgrade && apt-get install nginx -y
+
+EXPOSE 80
+
+
+#
+# DEPLOY APP
+#
+COPY ./ /var/www/reader
+
+WORKDIR /var/www/reader/
+
+RUN pip install pipenv gunicorn
+
+RUN pipenv install --system --deploy
+
+
+#
+# DEPLOY WEBSITE
+#
+COPY ./deploy/reader.nginx /etc/nginx/sites-available/reader
+
+RUN mkdir /var/log/reader \
+ && rm -rf /etc/nginx/sites-enabled/default \
+ && ln -s /etc/nginx/sites-available/reader /etc/nginx/sites-enabled/reader
+
+
+#
+# SETUP ENTRYPOINT
+#
+COPY ./deploy/docker_entrypoint.sh /docker_entrypoint.sh
+
+RUN chmod +x /docker_entrypoint.sh
+
+ENTRYPOINT ["sh", "/docker_entrypoint.sh"]
+

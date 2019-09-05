@@ -1,0 +1,33 @@
+
+upstream reader_server {
+  server unix:/var/www/reader/gunicorn.sock fail_timeout=0;
+}
+
+server {
+    listen   80;
+    server_name localhost;
+
+    client_max_body_size 10M;
+
+    access_log /var/log/reader/nginx-access.log;
+    error_log /var/log/reader/nginx-error.log;
+
+    location /static/ {
+        alias   /var/www/reader/static/;
+    }
+
+    location /media/ {
+        alias   /var/www/reader/media/;
+    }
+
+    location / {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+
+        if (!-f $request_filename) {
+            proxy_pass http://reader_server;
+            break;
+        }
+    }
+}
