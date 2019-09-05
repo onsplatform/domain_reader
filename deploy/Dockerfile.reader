@@ -37,5 +37,6 @@ COPY ./deploy/docker_entrypoint.sh /docker_entrypoint.sh
 
 RUN chmod +x /docker_entrypoint.sh
 
+
 ENTRYPOINT ["sh", "/docker_entrypoint.sh"]
 
