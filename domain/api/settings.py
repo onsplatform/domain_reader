@@ -3,7 +3,7 @@ import os
 from domain.reader.orms.peewee import Peewee
 
 CELERY = { 
-    'broker': os.environ.get('CELERY_BROKER', 'pyamqp://guest@localhost//'),
+    'broker': os.environ.get('CELERY_BROKER', 'pyamqp://guest@rabbitmq//'),
     'name': 'task'
 }
 
