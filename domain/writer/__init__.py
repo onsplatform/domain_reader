@@ -3,7 +3,9 @@ from datetime import datetime
 
 from platform_sdk.process_memory import ProcessMemoryApi
 
+from autologging import logged
 
+@logged
 class DomainWriter:
     QUERIES = {
         'insert': 'INSERT INTO entities.{table} ({columns}) VALUES ({values});',
@@ -64,7 +66,7 @@ class DomainWriter:
                         print("sql error: " + str(e))
                         raise e
         except Exception as e:
-            self._trace_local('##### _execute_query ##### ERROR ', e)
+            self.__log.info('##### _execute_query ##### ERROR ', e)
         finally:
             self.db.close()
 
