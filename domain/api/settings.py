@@ -12,7 +12,7 @@ DATABASE = {
     'database': os.environ.get('POSTGRES_DB', 'platform_domain_schema'),
     'user': os.environ.get('POSTGRES_USER', 'postgres'),
     'password': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
-    'host': os.environ.get('POSTGRES_HOST', '10.24.1.251'),
+    'host': os.environ.get('POSTGRES_HOST', 'postgres'),
     'port': os.environ.get('POSTGRES_PORT', 5432),
 }
 
