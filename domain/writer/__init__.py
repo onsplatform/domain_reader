@@ -5,6 +5,7 @@ from platform_sdk.process_memory import ProcessMemoryApi
 
 from autologging import logged
 
+
 @logged
 class DomainWriter:
     QUERIES = {
@@ -121,6 +122,6 @@ class DomainWriter:
 
             schema[key] = {
                 'table': content[key]['model'],
-                'fields':  [{'name': k, 'column': v['column']} for k, v in fields.items()]
+                'fields': [{'name': k, 'column': v['column']} for k, v in fields.items()]
             }
         return schema
