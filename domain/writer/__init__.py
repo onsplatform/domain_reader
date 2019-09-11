@@ -73,22 +73,23 @@ class DomainWriter:
 
     def _get_sql(self, data, schemas, instance_id):
         for _type, entities in data.items():
-            schema = self._get_schema(schemas)[_type]
-            table = schema['table']
-            fields = schema['fields']
-            for entity in entities:
-                now = datetime.now()
-                entity['meta_instance_id'] = instance_id
-                entity['modified'] = now
-                # entity['branch'] = objects.get(entity, '_metadata.branch') uid?
+            if entities:
+                schema = self._get_schema(schemas)[_type]
+                table = schema['table']
+                fields = schema['fields']
+                for entity in entities:
+                    now = datetime.now()
+                    entity['meta_instance_id'] = instance_id
+                    entity['modified'] = now
+                    # entity['branch'] = objects.get(entity, '_metadata.branch') uid?
 
-                change_track = objects.get(entity, '_metadata.changeTrack')
-                if change_track:
-                    if change_track in {'update', 'destroy'} and instance_id:
-                        entity['deleted'] = change_track == 'destroy'
-                        yield self._get_update_sql(entity['id'], table, entity, fields)
-                    if change_track == 'create':
-                        yield self._get_insert_sql(table, entity, fields)
+                    change_track = objects.get(entity, '_metadata.changeTrack')
+                    if change_track:
+                        if change_track in {'update', 'destroy'} and instance_id:
+                            entity['deleted'] = change_track == 'destroy'
+                            yield self._get_update_sql(entity['id'], table, entity, fields)
+                        if change_track == 'create':
+                            yield self._get_insert_sql(table, entity, fields)
 
     def _get_update_sql(self, instance_id, table, entity, fields):
         values = [f"{field['column']}='{entity[field['name']]}'" for field in fields if field['name'] in entity]
