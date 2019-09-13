@@ -37,4 +37,4 @@ api.add_route(
 api.add_route(
     settings.BASE_URI[api_version] + 'persist/{_solution_id}/{_instance_id}', domain_writer_resource)
 api.add_route(
-    settings.BASE_URI_WRITER[api_version] + 'batch/persist', domain_batch_writer_resource)
+    settings.BASE_URI_WRITER[api_version] + 'batch/persist/{_solution_id}', domain_batch_writer_resource)

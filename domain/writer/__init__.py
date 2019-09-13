@@ -28,16 +28,15 @@ class DomainWriter:
         self.process_memory_api = ProcessMemoryApi(process_memory_settings)
         self.query_translator = str.maketrans(self.HOLDERS)
 
-    def import_data(self, entities):
-        bulk_sql = self._convert_imported_entity_to_sql(entities)
+    def import_data(self, entities, solution_id):
+        bulk_sql = self._convert_imported_entity_to_sql(entities, solution_id)
         self._execute_query(bulk_sql)
         return True
 
-    def _convert_imported_entity_to_sql(self, entities):
+    def _convert_imported_entity_to_sql(self, entities, solution_id):
         for entity in entities:
-            table = objects.get(entity, '_metadata.type')
             branch = objects.get(entity, '_metadata.branch')
-            solution_id = objects.get(entity, '_metadata.solution_id')
+            table = entity.pop('_metadata')['type']
             columns = ','.join(entity)
             values = ','.join(self._mogrify(p) for p in entity.values())
 
