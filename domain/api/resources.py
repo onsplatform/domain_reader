@@ -33,11 +33,11 @@ class DomainWriterResource(BaseResource):
     """
     """
 
-    def on_post(self, req, resp, _map):
-        if not req.instance_id:
+    def on_post(self, req, resp, _instance_id, _solution_id):
+        if not _instance_id or not _solution_id:
             return resp.bad_request()
 
-        if not self.controller.save_data(req.instance_id):
+        if not self.controller.save_data(_instance_id, _solution_id):
             return resp.internal_error()
 
         return resp.accepted()
@@ -51,7 +51,8 @@ class DomainReaderResource(BaseResource):
 
     def on_post(self, req, resp, _map, _type, _filter):
         if _map:
-            data = self.controller.get_data(_map, _type, _filter, req.json())
+            params = self.add_branch_filter(req, req.json())
+            data = self.controller.get_data(_map, _type, _filter, params)
             return resp.json(data)
 
         return resp.bad_request()
@@ -59,14 +60,20 @@ class DomainReaderResource(BaseResource):
     def on_get(self, req, resp, _map, _type, _filter):
         if _map:
             try:
-                data = self.controller.get_data(
-                    _map, _type, _filter, req.params)
+                params = self.add_branch_filter(req, req.params)
+                data = self.controller.get_data(_map, _type, _filter, params)
                 return resp.json(data)
             except Exception as e:
                 self._trace_local('###### ERROR ######', e)
                 return resp.internal_error("error, see stack")
 
         return resp.bad_request()
+
+    @staticmethod
+    def add_branch_filter(req, params):
+        if req.get_header('Branch'):
+            params['branch'] = req.get_header('Branch')
+        return params
 
 
 @autologging.traced

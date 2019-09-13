@@ -9,8 +9,12 @@ from autologging import logged
 @logged
 class DomainWriter:
     QUERIES = {
-        'insert': 'INSERT INTO entities.{table} ({columns}) VALUES ({values});',
-        'update': 'UPDATE entities.{table} SET {values} WHERE id=\'{pk}\';'
+        'insert': 'INSERT INTO entities.{table} ({columns}, branch) VALUES ({values}, '
+                  '(SELECT id from public.core_branch where solution_id=\'{solution_id}\' and '
+                  'name=\'{branch}\'));',
+        'update': 'UPDATE entities.{table} SET {values}, '
+                  'branch=(SELECT id from public.core_branch where solution_id=\'{solution_id}\' and '
+                  'name=\'{branch}\') WHERE id=\'{pk}\';'
     }
 
     HOLDERS = {
@@ -31,10 +35,14 @@ class DomainWriter:
 
     def _convert_imported_entity_to_sql(self, entities):
         for entity in entities:
-            table = entity.pop('_metadata')['type']
+            table = objects.get(entity, '_metadata.type')
+            branch = objects.get(entity, '_metadata.branch')
+            solution_id = objects.get(entity, '_metadata.solution_id')
             columns = ','.join(entity)
             values = ','.join(self._mogrify(p) for p in entity.values())
-            yield self.QUERIES['insert'].format(table=table, columns=columns, values=values)
+
+            yield self.QUERIES['insert'].format(table=table, columns=columns, values=values, branch=branch,
+                                                solution_id=solution_id)
 
     def _mogrify(self, value):
         if value is None:
@@ -45,14 +53,15 @@ class DomainWriter:
 
         return f"'{translated}'"
 
-    def save_data(self, process_memory_id):
+    def save_data(self, process_memory_id, solution_id):
         data = self.process_memory_api.get_process_memory_data(process_memory_id)
         content = objects.get(data, 'map.content')
         entities = objects.get(data, 'dataset.entities')
         instance_id = objects.get(data, 'instanceId')
+        fork = objects.get(data, 'fork')
 
         if content and entities:
-            bulk_sql = self._get_sql(entities, content, instance_id)
+            bulk_sql = self._get_sql(entities, content, instance_id, solution_id, fork)
             self._execute_query(bulk_sql)
             return True
 
@@ -71,7 +80,7 @@ class DomainWriter:
         finally:
             self.db.close()
 
-    def _get_sql(self, data, schemas, instance_id):
+    def _get_sql(self, data, schemas, instance_id, solution_id, fork):
         for _type, entities in data.items():
             if entities:
                 schema = self._get_schema(schemas)[_type]
@@ -81,45 +90,52 @@ class DomainWriter:
                     now = datetime.now()
                     entity['meta_instance_id'] = instance_id
                     entity['modified'] = now
-                    # entity['branch'] = objects.get(entity, '_metadata.branch') uid?
-
+                    branch = objects.get(entity, '_metadata.branch')
                     change_track = objects.get(entity, '_metadata.changeTrack')
+
                     if change_track:
-                        if change_track in {'update', 'destroy'} and instance_id:
+                        if change_track in {'update', 'destroy'} and instance_id and not fork:
                             entity['deleted'] = change_track == 'destroy'
-                            yield self._get_update_sql(entity['id'], table, entity, fields)
+                            yield self._get_update_sql(entity['id'], table, entity, fields, branch, solution_id)
+
+                        if change_track in {'update'} and instance_id and fork and \
+                                fork['name'] == branch and branch != 'master':
+                            entity['from_id'] = entity['id']
+                            yield self._get_insert_sql(table, entity, fields, branch, solution_id)
+
                         if change_track == 'create':
-                            yield self._get_insert_sql(table, entity, fields)
+                            yield self._get_insert_sql(table, entity, fields, branch, solution_id)
 
-    def _get_update_sql(self, instance_id, table, entity, fields):
+    def _get_update_sql(self, instance_id, table, entity, fields, branch, solution_id):
         values = [f"{field['column']}='{entity[field['name']]}'" for field in fields if field['name'] in entity]
-
         return self.QUERIES['update'].format(
             table=table,
             values=str.join(',', values),
-            pk=instance_id)
+            pk=instance_id,
+            branch=branch,
+            solution_id=solution_id
+        )
 
-    def _get_insert_sql(self, table, entity, fields):
+    def _get_insert_sql(self, table, entity, fields, branch, solution_id):
         columns = [field['column'] for field in fields if field['name'] in entity]
         values = [self._mogrify(entity[field['name']]) for field in fields if field['name'] in entity]
         return self.QUERIES['insert'].format(
             table=table,
             columns=str.join(',', columns),
             values=str.join(',', values),
+            branch=branch,
+            solution_id=solution_id
         )
 
     def _get_schema(self, content):
         schema = {}
         for key in content.keys():
             fields = content[key]['fields']
-
-            ''' 
-            TODO: move to domain_schema
-            '''
             fields['deleted'] = {'name': 'deleted', 'column': 'deleted'}
             fields['meta_instance_id'] = {'name': 'meta_instance_id', 'column': 'meta_instance_id'}
             fields['modified'] = {'name': 'modified', 'column': 'modified'}
             fields['from_id'] = {'name': 'from_id', 'column': 'from_id'}
+            fields['branch'] = {'name': 'branch', 'column': 'branch'}
 
             schema[key] = {
                 'table': content[key]['model'],

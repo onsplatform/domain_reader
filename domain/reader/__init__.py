@@ -1,4 +1,5 @@
 from peewee import SQL
+from pydash import objects
 import autologging
 
 from platform_sdk.domain.schema.api import SchemaApi
@@ -9,13 +10,18 @@ from .sql import QueryParser
 
 @autologging.logged
 class DomainReader:
+    QUERIES = {
+        'where_branch': '(branch = (SELECT id FROM public.core_branch where name=\'{branch}\' and '
+                        'solution_id=\'{solution_id}\')) and ',
+        'not_deleted': '(deleted is null or not deleted) and '
+    }
+
     def __init__(self, orm, db_settings, schema_settings):
         self.orm = orm
         self.db_settings = db_settings
         self.schema_api = SchemaApi(schema_settings)
         self._create_db(orm, db_settings)
 
-        # wrapping local tracer
         self._trace_local = lambda v, m: \
             self._DomainReader__log.log(
                 msg=f'{v}:{m}', level=autologging.TRACE)
@@ -24,17 +30,14 @@ class DomainReader:
         self.db = orm.db_factory('postgres', **db_settings)()
 
     def get_data(self, _map, _type, filter_name, params, history=False):
-        self._trace_local('###### get_data ######', _map)
-
         api_response = self.schema_api.get_schema(_map, _type)
-        self._trace_local('schema map id', api_response.get('id'))
 
         if api_response:
             model = self._get_model(api_response['model'], api_response['fields'] + api_response['metadata'], history)
-            self._trace_local('model', model)
-
             sql_filter = self._get_sql_filter(filter_name, api_response['filters'], history)
-            self._trace_local('sql_filter', sql_filter)
+
+            branch = params.get('branch')
+            solution_id = objects.get(api_response, 'model.solution_id')
 
             page = params.get('page')
             page_size = params.get('page_size')
@@ -44,25 +47,31 @@ class DomainReader:
             sql_query = self._get_sql_query(sql_filter, params)
             self._trace_local('sql_query', sql_query)
 
-            data = self._execute_query(model, sql_query, page, page_size)
+            data = self._execute_query(model, branch, solution_id, sql_query, page, page_size)
             return list(self._get_response_data(data, api_response['fields'], api_response['metadata']))
 
-    def _execute_query(self, model, sql_query, page, page_size=20):  # pragma: no cover
+    def _execute_query(self, model, branch, solution_id, sql_query, page, page_size=20):  # pragma: no cover
         try:
             self.db.connect(reuse_if_open=True)
             with self.db.atomic():
                 proxy_model = model.build(self.db)
                 query = proxy_model.select()
 
+                query_branch = ''
+                if branch:
+                    query_branch = self.QUERIES['where_branch'].format(branch=branch, solution_id=solution_id)
+
                 if sql_query and sql_query['sql_query']:
-                    sql_statement = SQL('(deleted is null or not deleted) and ' + sql_query['sql_query'],
-                                        sql_query['query_params'])
+                    sql_statement = SQL(
+                        query_branch +
+                        self.QUERIES['not_deleted'] +
+                        sql_query['sql_query'], sql_query['query_params']
+                    )
                     query = query.where(sql_statement)
 
                 if page and page_size:
                     query = query.paginate(int(page), int(page_size))
 
-                self._trace_local('data size', len(query or []))
                 return query
         except Exception as e:
             self._trace_local('##### _execute_query ##### ERROR ', e)
@@ -99,6 +108,5 @@ class DomainReader:
     def _get_sql_filter(filter_name, filters, history):
         if history:
             return 'id = :id'
-
         if filters and filter_name:
             return next(f['expression'] for f in filters if f['name'] == filter_name)

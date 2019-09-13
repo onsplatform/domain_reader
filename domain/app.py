@@ -10,12 +10,11 @@ from .writer import DomainWriter
 from .api import resources, settings
 from .api import utils
 
-
 # initializing logger
 logging.basicConfig(
-        level=autologging.TRACE,
-        stream=sys.stdout,
-        format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
+    level=autologging.TRACE,
+    stream=sys.stdout,
+    format="%(levelname)s:%(name)s:%(funcName)s:%(message)s")
 
 api = falcon.API(response_type=utils.APIResponse, request_type=utils.APIRequest)
 api_version = 1
@@ -36,6 +35,6 @@ api.add_route(
 api.add_route(
     settings.BASE_URI[api_version] + '{_map}/{_type}/history/{id}', domain_history_resource)
 api.add_route(
-    settings.BASE_URI[api_version] + '{_map}/persist', domain_writer_resource)
+    settings.BASE_URI[api_version] + 'persist/{_solution_id}/{_instance_id}', domain_writer_resource)
 api.add_route(
     settings.BASE_URI_WRITER[api_version] + 'batch/persist', domain_batch_writer_resource)
