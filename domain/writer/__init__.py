@@ -93,7 +93,7 @@ class DomainWriter:
                     change_track = objects.get(entity, '_metadata.changeTrack')
 
                     if change_track:
-                        if change_track in {'update', 'destroy'} and instance_id and not fork:
+                        if change_track in {'update', 'destroy'} and instance_id and (not fork or branch == 'master'):
                             entity['deleted'] = change_track == 'destroy'
                             yield self._get_update_sql(entity['id'], table, entity, fields, branch, solution_id)
 
