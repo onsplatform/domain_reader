@@ -11,8 +11,10 @@ from .sql import QueryParser
 @autologging.logged
 class DomainReader:
     QUERIES = {
-        'where_branch': '(branch = (SELECT id FROM public.core_branch where name=\'{branch}\' and '
-                        'solution_id=\'{solution_id}\')) and ',
+        'where_branch': '(branch in (select id from public.core_branch '
+                        'where name in(\'{branch}\', \'master\') and solution_id=\'{solution_id}\')) and '
+                        'id not in (select from_id from entities.{table} where from_id is not null and '
+                        'branch=(select id from public.core_branch where name =\'{branch}\')) and ',
         'not_deleted': '(deleted is null or not deleted) and '
     }
 
@@ -37,6 +39,7 @@ class DomainReader:
             sql_filter = self._get_sql_filter(filter_name, api_response['filters'], history)
 
             branch = params.get('branch')
+            table = objects.get(api_response, 'model.table')
             solution_id = objects.get(api_response, 'model.solution_id')
 
             page = params.get('page')
@@ -47,10 +50,10 @@ class DomainReader:
             sql_query = self._get_sql_query(sql_filter, params)
             self._trace_local('sql_query', sql_query)
 
-            data = self._execute_query(model, branch, solution_id, sql_query, page, page_size)
+            data = self._execute_query(model, table, branch, solution_id, sql_query, page, page_size)
             return list(self._get_response_data(data, api_response['fields'], api_response['metadata']))
 
-    def _execute_query(self, model, branch, solution_id, sql_query, page, page_size=20):  # pragma: no cover
+    def _execute_query(self, model, table, branch, solution_id, sql_query, page, page_size=20):  # pragma: no cover
         try:
             self.db.connect(reuse_if_open=True)
             with self.db.atomic():
@@ -59,7 +62,9 @@ class DomainReader:
 
                 query_branch = ''
                 if branch:
-                    query_branch = self.QUERIES['where_branch'].format(branch=branch, solution_id=solution_id)
+                    query_branch = self.QUERIES['where_branch'].format(
+                        table=table, branch=branch, solution_id=solution_id
+                    )
 
                 if sql_query and sql_query['sql_query']:
                     sql_statement = SQL(
