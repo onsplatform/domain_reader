@@ -11,10 +11,11 @@ from .sql import QueryParser
 @autologging.logged
 class DomainReader:
     QUERIES = {
-        'where_branch': '(branch in (select id from public.core_branch '
-                        'where name in(\'{branch}\', \'master\') and solution_id=\'{solution_id}\')) and '
-                        'id not in (select from_id from entities.{table} where from_id is not null and '
-                        'branch=(select id from public.core_branch where name =\'{branch}\')) and ',
+        'where_branch_not_master': '(branch in (select id from public.core_branch '
+                                   'where name in(\'{branch}\', \'master\') and solution_id=\'{solution_id}\')) and '
+                                   'id not in (select from_id from entities.{table} where from_id is not null and '
+                                   'branch=(select id from public.core_branch where name =\'{branch}\')) and ',
+        'where_branch_is_master': '(branch=(select id from public.core_branch where name=\'master\')) and ',
         'not_deleted': '(deleted is null or not deleted) and '
     }
 
@@ -60,9 +61,12 @@ class DomainReader:
                 proxy_model = model.build(self.db)
                 query = proxy_model.select()
 
-                query_branch = ''
-                if branch:
-                    query_branch = self.QUERIES['where_branch'].format(
+                if not branch or branch == 'all':
+                    query_branch = ''
+                elif branch == 'master':
+                    query_branch = self.QUERIES['where_branch_is_master']
+                else:
+                    query_branch = self.QUERIES['where_branch_not_master'].format(
                         table=table, branch=branch, solution_id=solution_id
                     )
 
