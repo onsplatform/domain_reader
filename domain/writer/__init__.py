@@ -122,6 +122,7 @@ class DomainWriter:
 
     def _get_update_sql(self, instance_id, table, entity, fields, branch_name, solution_id, branch = False):
         values = [f"{field['column']}='{entity[field['name']]}'" for field in fields if field['name'] in entity]
+        update_branch = ''
         if branch:
             update_branch = "_branch"
         return self.QUERIES['update' + update_branch].format(
