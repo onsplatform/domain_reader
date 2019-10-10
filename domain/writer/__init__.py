@@ -15,8 +15,9 @@ class DomainWriter:
         'update': 'UPDATE entities.{table} SET {values}, '
                   'branch=(SELECT id from public.core_branch where solution_id=\'{solution_id}\' and '
                   'name=\'{branch}\') WHERE id=\'{pk}\';',
-        'count_entity': 'select count(1) from entities.{table} where id=\'{pk}\' and '
-                  'branch=(SELECT id from public.core_branch where solution_id=\'{solution_id}\' and name=\'{branch}\');'
+        'update_branch': 'UPDATE entities.{table} SET {values} '
+                  'WHERE from_id=\'{pk}\' and branch=(SELECT id from public.core_branch where solution_id=\'{solution_id}\' and name=\'{branch}\');',
+        'count_entity': 'select count(1) from entities.{table} where from_id=\'{pk}\' and branch=(SELECT id from public.core_branch where solution_id=\'{solution_id}\' and name=\'{branch}\');'
     }
 
     HOLDERS = {
@@ -72,8 +73,8 @@ class DomainWriter:
             with self.db.atomic():
                 for sql in bulk_sql:
                     try:
-                        self.db.execute_sql(sql)
-                        #print(sql)
+                        #self.db.execute_sql(sql)
+                        print(sql)
                     except Exception as e:
                         print("sql error: " + str(e))
                         raise e
@@ -101,13 +102,17 @@ class DomainWriter:
                     change_track = objects.get(entity, '_metadata.changeTrack')
 
                     if change_track:
-                        if change_track in {'update', 'destroy'} and instance_id:
+                        if change_track in {'update', 'destroy'} and instance_id and branch == 'master':
+                            entity['deleted'] = change_track == 'destroy'
+                            yield self._get_update_sql(entity['id'], table, entity, fields, branch, solution_id)
+
+                        if change_track in {'update', 'destroy'} and instance_id and branch != 'master':
                             count_entity = self._execute_scalar_query(
                                 self.QUERIES['count_entity'].format(table=table,pk=entity['id'],solution_id=solution_id,branch=branch)
                             )
                             if count_entity > 0:
                                 entity['deleted'] = change_track == 'destroy'
-                                yield self._get_update_sql(entity['id'], table, entity, fields, branch, solution_id)
+                                yield self._get_update_sql(entity['id'], table, entity, fields, branch, solution_id, True)
                             else:
                                 entity['from_id'] = entity['id']
                                 yield self._get_insert_sql(table, entity, fields, branch, solution_id)
@@ -115,13 +120,15 @@ class DomainWriter:
                         if change_track == 'create':
                             yield self._get_insert_sql(table, entity, fields, branch, solution_id)
 
-    def _get_update_sql(self, instance_id, table, entity, fields, branch, solution_id):
+    def _get_update_sql(self, instance_id, table, entity, fields, branch_name, solution_id, branch = False):
         values = [f"{field['column']}='{entity[field['name']]}'" for field in fields if field['name'] in entity]
-        return self.QUERIES['update'].format(
+        if branch:
+            update_branch = "_branch"
+        return self.QUERIES['update' + update_branch].format(
             table=table,
             values=str.join(',', values),
             pk=instance_id,
-            branch=branch,
+            branch=branch_name,
             solution_id=solution_id
         )
 
