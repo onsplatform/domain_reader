@@ -72,8 +72,8 @@ class DomainWriter:
             with self.db.atomic():
                 for sql in bulk_sql:
                     try:
-                        #self.db.execute_sql(sql)
-                        print(sql)
+                        self.db.execute_sql(sql)
+                        #print(sql)
                     except Exception as e:
                         print("sql error: " + str(e))
                         raise e
