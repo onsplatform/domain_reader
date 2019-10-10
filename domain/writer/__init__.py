@@ -14,7 +14,9 @@ class DomainWriter:
                   'name=\'{branch}\'));',
         'update': 'UPDATE entities.{table} SET {values}, '
                   'branch=(SELECT id from public.core_branch where solution_id=\'{solution_id}\' and '
-                  'name=\'{branch}\') WHERE id=\'{pk}\';'
+                  'name=\'{branch}\') WHERE id=\'{pk}\';',
+        'exists': 'select count(1) from entities.{table} where id=\'{pk}\' and '
+                  'branch=(SELECT id from public.core_branch where solution_id=\'{solution_id}\' and name=\'{branch}\');'
     }
 
     HOLDERS = {
@@ -70,7 +72,7 @@ class DomainWriter:
             with self.db.atomic():
                 for sql in bulk_sql:
                     try:
-                        self.db.execute_sql(sql)
+                        return self.db.execute_sql(sql)
                     except Exception as e:
                         print("sql error: " + str(e))
                         raise e
@@ -78,6 +80,12 @@ class DomainWriter:
             self.__log.info('##### _execute_query ##### ERROR ', e)
         finally:
             self.db.close()
+
+    def _execute_scalar_query(self, sql):  # pragma: no cover
+        row = self.db.execute_sql(sql).fetchone()
+        if row:
+            return row[0]
+
 
     def _get_sql(self, data, schemas, instance_id, solution_id, fork):
         for _type, entities in data.items():
@@ -93,15 +101,15 @@ class DomainWriter:
                     change_track = objects.get(entity, '_metadata.changeTrack')
 
                     if change_track:
-                        if change_track in {'update', 'destroy'} and instance_id and (not fork or branch == 'master'):
-                            entity['deleted'] = change_track == 'destroy'
-                            yield self._get_update_sql(entity['id'], table, entity, fields, branch, solution_id)
-
-                        if change_track in {'update'} and instance_id and fork and \
-                                fork['name'] == branch and branch != 'master':
-                            entity['from_id'] = entity['id']
-                            yield self._get_insert_sql(table, entity, fields, branch, solution_id)
-
+                        if change_track in {'update', 'destroy'} and instance_id:
+                            count = self._execute_scalar_query(self.QUERIES['exists'].format(table=table,pk=entity['id'],solution_id=solution_id,branch=branch))
+                            if count > 0:
+                                entity['deleted'] = change_track == 'destroy'
+                                yield self._get_update_sql(entity['id'], table, entity, fields, branch, solution_id)
+                            else:
+                                entity['from_id'] = entity['id']
+                                yield self._get_insert_sql(table, entity, fields, branch, solution_id)
+                                
                         if change_track == 'create':
                             yield self._get_insert_sql(table, entity, fields, branch, solution_id)
 
