@@ -77,14 +77,14 @@ class DomainWriter:
                         print("sql error: " + str(e))
                         raise e
         except Exception as e:
-            self.__log.info('##### _execute_query ##### ERROR ', e)
+            print('##### _execute_query ##### ERROR ')
         finally:
             self.db.close()
 
     def _execute_scalar_query(self, sql):  # pragma: no cover
         row = self.db.execute_sql(sql).fetchone()
         if row:
-            return row[0]
+            return 1
 
     def _get_sql(self, data, schemas, instance_id, solution_id, fork):
         for _type, entities in data.items():
