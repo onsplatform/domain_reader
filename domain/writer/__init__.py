@@ -9,10 +9,9 @@ from autologging import logged
 @logged
 class DomainWriter:
     QUERIES = {
-        'insert':        'INSERT INTO entities.{table} ({columns}, branch) VALUES ({values},\'{branch}\');',
-        'update':        'UPDATE entities.{table} SET {values}, branch=\'{branch}\' WHERE id=\'{pk}\';',
-        'update_branch': 'UPDATE entities.{table} SET {values} WHERE id=\'{pk}\' and branch=\'{branch}\';',
-        'count_entity':  'SELECT count(1) from entities.{table} WHERE id=\'{pk}\' and branch=\'{branch}\';'
+        'insert': 'INSERT INTO entities.{table} ({columns}, branch) VALUES ({values},\'{branch}\');',
+        'update': 'UPDATE entities.{table} SET {values} WHERE id=\'{pk}\';',
+        'count_entity': 'SELECT count(1) FROM entities.{table} WHERE id=\'{pk}\';'
     }
 
     HOLDERS = {
@@ -69,7 +68,7 @@ class DomainWriter:
                 for sql in bulk_sql:
                     try:
                         self.db.execute_sql(sql)
-                        #print(sql)
+                        # print(sql)
                     except Exception as e:
                         print("sql error: " + str(e))
                         raise e
@@ -103,11 +102,12 @@ class DomainWriter:
 
                         if change_track in {'update', 'destroy'} and instance_id and branch != 'master':
                             count_entity = self._execute_scalar_query(
-                                self.QUERIES['count_entity'].format(table=table,pk=entity['id'],solution_id=solution_id,branch=branch)
+                                self.QUERIES['count_entity'].format(table=table, pk=entity['id'],
+                                                                    solution_id=solution_id, branch=branch)
                             )
                             if count_entity > 0:
                                 entity['deleted'] = change_track == 'destroy'
-                                yield self._get_update_sql(entity['id'], table, entity, fields, branch, solution_id, True)
+                                yield self._get_update_sql(entity['id'], table, entity, fields, branch, solution_id)
                             else:
                                 entity['from_id'] = entity['id']
                                 yield self._get_insert_sql(table, entity, fields, branch, solution_id)
@@ -115,12 +115,9 @@ class DomainWriter:
                         if change_track == 'create':
                             yield self._get_insert_sql(table, entity, fields, branch, solution_id)
 
-    def _get_update_sql(self, instance_id, table, entity, fields, branch_name, solution_id, branch = False):
+    def _get_update_sql(self, instance_id, table, entity, fields, branch_name, solution_id, branch=False):
         values = [f"{field['column']}='{entity[field['name']]}'" for field in fields if field['name'] in entity]
-        update_branch = ''
-        if branch:
-            update_branch = "_branch"
-        return self.QUERIES['update' + update_branch].format(
+        return self.QUERIES['update'].format(
             table=table,
             values=str.join(',', values),
             pk=instance_id,
