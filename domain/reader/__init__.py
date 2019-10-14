@@ -11,8 +11,7 @@ from .sql import QueryParser
 @autologging.logged
 class DomainReader:
     QUERIES = {
-        'where_branch': '(branch in (select name from public.core_branch '
-                        'where name in(\'{branch}\', \'master\') and solution_id=\'{solution_id}\')) and '
+        'where_branch': '(branch in (\'{branch}\', \'master\')) and '
                         'id not in (select from_id from entities.{table} where from_id is not null and '
                         'branch=\'{branch}\') and ',
         'not_deleted': '(deleted is null or not deleted) and '
