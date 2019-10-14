@@ -94,6 +94,7 @@ class DomainWriter:
                     entity['modified'] = now
                     branch = objects.get(entity, '_metadata.branch')
                     change_track = objects.get(entity, '_metadata.changeTrack')
+                    from_id = objects.get(entity, '_metadata.from_id')
 
                     if change_track:
                         if change_track in {'update', 'destroy'} and instance_id and branch == 'master':
@@ -113,6 +114,8 @@ class DomainWriter:
                                 yield self._get_insert_sql(table, entity, fields, branch, solution_id)
 
                         if change_track == 'create':
+                            if from_id:
+                                entity['from_id'] = from_id
                             yield self._get_insert_sql(table, entity, fields, branch, solution_id)
 
     def _get_update_sql(self, instance_id, table, entity, fields, branch_name, solution_id, branch=False):
