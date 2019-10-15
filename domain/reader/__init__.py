@@ -11,9 +11,9 @@ from .sql import QueryParser
 @autologging.logged
 class DomainReader:
     QUERIES = {
-        'where_branch': ' and (branch in (%s, \'master\')) and'
-                        ' id not in (select from_id from entities.{table} where from_id is not null and branch=%s)',
-        'not_deleted':  ' and (deleted is null or not deleted)'
+        'where_branch': '(branch in (%s, \'master\')) and '
+                        'id not in (select from_id from entities.{table} where from_id is not null and branch=%s) and ',
+        'not_deleted':  '(deleted is null or not deleted) and '
     }
 
     def __init__(self, orm, db_settings, schema_settings):
@@ -61,11 +61,12 @@ class DomainReader:
 
                 if branch:
                     query_branch = self.QUERIES['where_branch'].format(table=table)
-                    query_params = query_params + (branch, branch, )
+                    query_params = (branch, branch, ) + query_params
 
                 if sql_query and sql_query['sql_query']:
                     sql_statement = SQL(
-                        sql_query['sql_query'] + query_branch + self.QUERIES['not_deleted'],
+                        query_branch + self.QUERIES['not_deleted'] +
+                        sql_query['sql_query'],
                         query_params
                     )
                     query = query.where(sql_statement)
