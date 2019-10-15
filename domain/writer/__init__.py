@@ -115,15 +115,12 @@ class DomainWriter:
                                 entity['deleted'] = change_track == 'destroy'
                                 yield self._get_update_sql(entity['id'], table, entity, fields, branch, solution_id)
                             else:
-                                entity['from_id'] = entity['id']
-                                yield self._get_insert_sql(table, entity, fields, branch, solution_id)
+                                yield self._get_insert_sql(table, entity, fields, branch, solution_id, from_id)
 
                         if change_track == 'create':
-                            if from_id:
-                                entity['from_id'] = from_id
-                            yield self._get_insert_sql(table, entity, fields, branch, solution_id)
+                            yield self._get_insert_sql(table, entity, fields, branch, solution_id, from_id)
 
-    def _get_update_sql(self, instance_id, table, entity, fields, branch_name, solution_id, branch=False):
+    def _get_update_sql(self, instance_id, table, entity, fields, branch_name, solution_id):
         values = [f"{field['column']}='{entity[field['name']]}'" for field in fields if field['name'] in entity]
         return self.QUERIES['update'].format(
             table=table,
@@ -133,7 +130,10 @@ class DomainWriter:
             solution_id=solution_id
         )
 
-    def _get_insert_sql(self, table, entity, fields, branch, solution_id):
+    def _get_insert_sql(self, table, entity, fields, branch, solution_id, from_id):
+        if from_id:
+            entity['from_id'] = from_id
+
         columns = [field['column'] for field in fields if field['name'] in entity]
         values = [self._mogrify(entity[field['name']]) for field in fields if field['name'] in entity]
         return self.QUERIES['insert'].format(
