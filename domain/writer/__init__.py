@@ -1,3 +1,5 @@
+import traceback
+
 from pydash import objects
 from datetime import datetime
 
@@ -70,10 +72,13 @@ class DomainWriter:
                         self.db.execute_sql(sql)
                         # print(sql)
                     except Exception as e:
-                        print("sql error: " + str(e))
+                        print('##### ERROR execute_sql: #####')
+                        traceback.print_exc()
                         raise e
         except Exception as e:
-            print('##### _execute_query ##### ERROR ')
+            print('##### ERROR _execute_query #####')
+            traceback.print_exc()
+            raise e
         finally:
             self.db.close()
 
