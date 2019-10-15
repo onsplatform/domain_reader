@@ -11,9 +11,10 @@ from .sql import QueryParser
 @autologging.logged
 class DomainReader:
     QUERIES = {
+        'not_deleted': '(deleted is null or not deleted)',
+
         'where_branch': '(branch in (%s, \'master\')) and '
-                        'id not in (select from_id from entities.{table} where from_id is not null and branch=%s) and ',
-        'not_deleted':  '(deleted is null or not deleted) and '
+                        'id not in (select from_id from entities.{table} where from_id is not null and branch=%s) AND '
     }
 
     def __init__(self, orm, db_settings, schema_settings):
@@ -54,24 +55,28 @@ class DomainReader:
         try:
             self.db.connect(reuse_if_open=True)
             with self.db.atomic():
+                query_user = ''
                 query_branch = ''
                 query_params = ()
                 proxy_model = model.build(self.db)
                 query = proxy_model.select()
-                if sql_query:
+                query_not_deleted = self.QUERIES['not_deleted']
+
+                if sql_query and sql_query['sql_query']:
+                    query_user = sql_query['sql_query']
                     query_params = sql_query['query_params']
 
                 if branch:
                     query_branch = self.QUERIES['where_branch'].format(table=table)
-                    query_params = (branch, branch, ) + query_params
+                    query_params = (branch, branch,) + query_params
 
-                if sql_query and sql_query['sql_query']:
-                    sql_statement = SQL(
-                        query_branch + self.QUERIES['not_deleted'] +
-                        sql_query['sql_query'],
-                        query_params
-                    )
-                    query = query.where(sql_statement)
+                if query_user != '':
+                    query_not_deleted += ' AND '
+
+                query = query.where(SQL(
+                    query_branch + query_not_deleted + query_user,
+                    query_params
+                ))
 
                 if page and page_size:
                     query = query.paginate(int(page), int(page_size))
