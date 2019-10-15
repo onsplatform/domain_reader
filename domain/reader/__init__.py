@@ -57,7 +57,8 @@ class DomainReader:
                 query_branch = ''
                 proxy_model = model.build(self.db)
                 query = proxy_model.select()
-                query_params = sql_query['query_params']
+                if sql_query:
+                    query_params = sql_query['query_params']
 
                 if branch:
                     query_branch = self.QUERIES['where_branch'].format(table=table)
