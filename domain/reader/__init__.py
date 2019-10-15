@@ -55,6 +55,7 @@ class DomainReader:
             self.db.connect(reuse_if_open=True)
             with self.db.atomic():
                 query_branch = ''
+                query_params = ()
                 proxy_model = model.build(self.db)
                 query = proxy_model.select()
                 if sql_query:
