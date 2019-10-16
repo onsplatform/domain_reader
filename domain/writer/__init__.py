@@ -34,7 +34,9 @@ class DomainWriter:
 
     def _convert_imported_entity_to_sql(self, entities):
         for entity in entities:
+            branch = objects.get(entity, '_metadata.branch')
             table = entity.pop('_metadata')['type']
+            entity['branch'] = branch
             columns = ','.join(entity)
             values = ['%s' for p in entity.values()]
             params = tuple(p for p in entity.values())
