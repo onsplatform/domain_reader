@@ -56,7 +56,6 @@ class DomainReader:
             self.db.connect(reuse_if_open=True)
             with self.db.atomic():
                 query_user = ''
-                query_branch = ''
                 query_params = ()
                 proxy_model = model.build(self.db)
                 query = proxy_model.select()
@@ -66,9 +65,10 @@ class DomainReader:
                     query_user = sql_query['sql_query']
                     query_params = sql_query['query_params']
 
-                if branch:
-                    query_branch = self.QUERIES['where_branch'].format(table=table)
-                    query_params = (branch, branch,) + query_params
+                if not branch:
+                    branch = 'master'
+                query_branch = self.QUERIES['where_branch'].format(table=table)
+                query_params = (branch, branch,) + query_params
 
                 if query_user != '':
                     query_not_deleted += ' AND '
