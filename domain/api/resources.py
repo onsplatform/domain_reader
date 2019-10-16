@@ -21,8 +21,8 @@ class DomainBatchWriterResource(BaseResource):
     """
     """
 
-    def on_post(self, req, resp, _solution_id):
-        import_task.import_data.delay(req.json(), _solution_id)
+    def on_post(self, req, resp):
+        import_task.import_data.delay(req.json())
 
         return resp.accepted()
 
@@ -33,11 +33,11 @@ class DomainWriterResource(BaseResource):
     """
     """
 
-    def on_post(self, req, resp, _instance_id, _solution_id):
-        if not _instance_id or not _solution_id:
+    def on_post(self, req, resp, _instance_id):
+        if not _instance_id:
             return resp.bad_request()
 
-        if not self.controller.save_data(_instance_id, _solution_id):
+        if not self.controller.save_data(_instance_id):
             return resp.internal_error()
 
         return resp.accepted()
