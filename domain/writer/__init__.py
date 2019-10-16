@@ -34,12 +34,20 @@ class DomainWriter:
 
     def _convert_imported_entity_to_sql(self, entities):
         for entity in entities:
-            branch = objects.get(entity, '_metadata.branch')
             table = entity.pop('_metadata')['type']
             columns = ','.join(entity)
-            values = ','.join(self._mogrify(p) for p in entity.values())
+            values = ['%s' for p in entity.values()]
+            params = tuple(p for p in entity.values())
 
-            yield self.QUERIES['insert'].format(table=table, columns=columns, values=values, branch=branch)
+            yield {
+                'query': self.QUERIES['insert'].format(
+                    table=table,
+                    values=str.join(',', values),
+                    columns=columns
+                ),
+                'params': params
+            }
+
 
     def _mogrify(self, value):
         if value is None:
