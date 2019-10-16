@@ -22,7 +22,7 @@ class DomainBatchWriterResource(BaseResource):
     """
 
     def on_post(self, req, resp):
-        import_task.import_data.delay(req.json())
+        import_task.import_data(req.json())
 
         return resp.accepted()
 
