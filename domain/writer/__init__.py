@@ -126,9 +126,11 @@ class DomainWriter:
 
     def _get_update_sql(self, entity_id, table, entity, fields, change_track):
         entity['deleted'] = change_track == 'destroy'
-        values = [f"{field['column']}=%s" for field in fields if field['name'] in entity]
-        params = \
-            tuple(entity[field['name']] for field in fields if field['name'] in entity) + (entity_id, )
+        entity['branch'] = objects.get(entity, '_metadata.branch')
+        values = [f"{field['column']}=%s" for field in fields]
+        params = tuple(
+            entity[field['name']] if field['name'] in entity else None for field in fields
+        ) + (entity_id, )
         return {
             'query': self.QUERIES['update'].format(
                 table=table,
