@@ -49,6 +49,13 @@ class DomainReader:
             self._trace_local('sql_query', sql_query)
 
             data = self._execute_query(model, table, branch, sql_query, page, page_size)
+
+            # If data from history is empty, means the record is on the original entity.
+            if not data and history:
+                model = self._get_model(api_response['model'], api_response['fields'] + api_response['metadata'],
+                                        False)
+                data = self._execute_query(model, table, branch, sql_query, page, page_size)
+
             return list(self._get_response_data(data, api_response['fields'], api_response['metadata']))
 
     def _execute_query(self, model, table, branch, sql_query, page, page_size=20):  # pragma: no cover
