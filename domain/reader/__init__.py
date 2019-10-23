@@ -31,6 +31,15 @@ class DomainReader:
         self.db = orm.db_factory('postgres', **db_settings)()
 
     def get_data(self, _map, _type, filter_name, params, history=False):
+        """
+        Gets the data from database, based on the given parameters.
+        :param _map: EntityMap is the main entity.
+        :param _type: The data type or class of object.
+        :param filter_name: Filter name as it was given in the configuration file: "byId".
+        :param params: Filter expression, that will be converted into into SQL Query filters.
+        :param history: A bool to determine if we should get data from entity or its history.
+        :return: Dataset object containing the data found.
+        """
         api_response = self.schema_api.get_schema(_map, _type)
 
         if api_response:
@@ -48,15 +57,34 @@ class DomainReader:
             sql_query = self._get_sql_query(sql_filter, params)
             self._trace_local('sql_query', sql_query)
 
-            data = self._execute_query(model, table, branch, sql_query, page, page_size)
-
-            # If data from history is empty, means the record is on the original entity.
-            if not data and history:
-                model = self._get_model(api_response['model'], api_response['fields'] + api_response['metadata'],
-                                        False)
-                data = self._execute_query(model, table, branch, sql_query, page, page_size)
+            # Data may come from current entity or history
+            data = self._obtain_data(api_response, branch, history, model, page, page_size, sql_query, table)
 
             return list(self._get_response_data(data, api_response['fields'], api_response['metadata']))
+
+    def _obtain_data(self, api_response, branch, history: bool, model, page, page_size, sql_query, table):
+        """
+        Gets the data either from the original entity or its history. Obtain data works by checking if history is
+        empty and still needs to return the first record.
+        :param api_response: Data schema to be returned.
+        :param branch: Branch name.
+        :param history: Bool. Try to get data from entity´s history.
+        :param model: Entity model from Domain.
+        :param page: Which page it should return.
+        :param page_size: Page size. Values should be reasonable or query may take a long time or timeout.
+        :param sql_query: Query to be performed in database
+        :param table: Entity to perform query.
+        :return: Returns a dataset from an entity or its history.
+        """
+        # Get data from the entity
+        data = self._execute_query(model, table, branch, sql_query, page, page_size)
+
+        # If data from history is empty, means the record is on the original entity.
+        if history and not data:
+            model = self._get_model(api_response['model'], api_response['fields'] + api_response['metadata'],
+                                    False)
+            data = self._execute_query(model, table, branch, sql_query, page, page_size)
+        return data
 
     def _execute_query(self, model, table, branch, sql_query, page, page_size=20):  # pragma: no cover
         try:
