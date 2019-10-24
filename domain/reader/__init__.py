@@ -100,7 +100,7 @@ class DomainReader:
                     query_params
                 ))
 
-                if page and page_size:
+                if page and page_size and not count:
                     query = query.paginate(int(page), int(page_size))
 
                 if count:
