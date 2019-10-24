@@ -30,35 +30,46 @@ class DomainReader:
     def _create_db(self, orm, db_settings):
         self.db = orm.db_factory('postgres', **db_settings)()
 
+    def get_history_data(self, _map, _type, filter_name, params):
+        schema = self.schema_api.get_schema(_map, _type)
+        data = self._get_data(schema, _map, _type, filter_name, params, history=True, get_by_id=True)
+        if not data:
+            data = self._get_data(schema, _map, _type, filter_name, params,
+                                  history=False, count=False, get_by_id=True)
+        return data
+
+    def get_data_count(self, _map, _type, filter_name, params, history=False):
+        schema = self.schema_api.get_schema(_map, _type)
+        return self._get_data(schema, _map, _type, filter_name, params, history, count=True)
+
     def get_data(self, _map, _type, filter_name, params, history=False):
-        api_response = self.schema_api.get_schema(_map, _type)
+        schema = self.schema_api.get_schema(_map, _type)
+        return self._get_data(schema, _map, _type, filter_name, params, history)
 
-        if api_response:
-            model = self._get_model(api_response['model'], api_response['fields'] + api_response['metadata'], history)
-            sql_filter = self._get_sql_filter(filter_name, api_response['filters'], history)
+    def _get_data(self, schema, _map, _type, filter_name, params, history=False, count=False, get_by_id=False):
+        if schema:
+            sql_properties = self._get_sql_properties(schema, _map, _type, filter_name, params, history, get_by_id)
+            data = self._execute_query(sql_properties['model'], sql_properties['table'],
+                                       sql_properties['branch'], sql_properties['sql_query'],
+                                       sql_properties['page'], sql_properties['page_size'], get_by_id, count)
+            if count:
+                return data
+            return list(self._get_response_data(data, schema['fields'], schema['metadata']))
 
-            branch = params.get('branch')
-            table = objects.get(api_response, 'model.table')
+    def _get_sql_properties(self, schema, _map, _type, filter_name, params, history, get_by_id=False):
+        model = self._get_model(schema['model'], schema['fields'] + schema['metadata'], history)
+        sql_filter = self._get_sql_filter(filter_name, schema['filters'], history, get_by_id)
+        branch = params.get('branch')
+        table = objects.get(schema, 'model.table')
+        page = params.get('page')
+        page_size = params.get('page_size')
+        params = {k: v for k, v in params.items() if k and v}
+        self._trace_local('params', params)
+        sql_query = self._get_sql_query(sql_filter, params)
+        return dict(model=model, table=table, branch=branch, sql_query=sql_query, page=page, page_size=page_size)
 
-            page = params.get('page')
-            page_size = params.get('page_size')
-            params = {k: v for k, v in params.items() if k and v}
-            self._trace_local('params', params)
-
-            sql_query = self._get_sql_query(sql_filter, params)
-            self._trace_local('sql_query', sql_query)
-
-            data = self._execute_query(model, table, branch, sql_query, page, page_size)
-
-            # If data from history is empty, means the record is on the original entity.
-            if not data and history:
-                model = self._get_model(api_response['model'], api_response['fields'] + api_response['metadata'],
-                                        False)
-                data = self._execute_query(model, table, branch, sql_query, page, page_size)
-
-            return list(self._get_response_data(data, api_response['fields'], api_response['metadata']))
-
-    def _execute_query(self, model, table, branch, sql_query, page, page_size=20):  # pragma: no cover
+    def _execute_query(self, model, table, branch, sql_query, page, page_size=20,
+                       get_by_id=False, count=False):  # pragma: no cover
         try:
             self.db.connect(reuse_if_open=True)
             with self.db.atomic():
@@ -80,13 +91,20 @@ class DomainReader:
                 if query_user != '':
                     query_not_deleted += ' AND '
 
+                if get_by_id:
+                    query_not_deleted = query_branch = ''
+                    query_params = sql_query['query_params']
+
                 query = query.where(SQL(
                     query_branch + query_not_deleted + query_user,
                     query_params
                 ))
 
-                if page and page_size:
+                if page and page_size and not count:
                     query = query.paginate(int(page), int(page_size))
+
+                if count:
+                    query = query.count()
 
                 return query
         except Exception as e:
@@ -99,10 +117,7 @@ class DomainReader:
         if sql_filter and params:
             parser = QueryParser(sql_filter)
             query, params = parser.parse(params)
-            return {
-                'sql_query': query,
-                'query_params': params
-            }
+            return dict(sql_query=query, query_params=params)
 
     @staticmethod
     def _get_response_data(entities, fields, metadata):
@@ -121,8 +136,8 @@ class DomainReader:
         return RemoteMap(model['name'], model['table'], self._get_fields(fields), self.orm, history)
 
     @staticmethod
-    def _get_sql_filter(filter_name, filters, history):
-        if history:
+    def _get_sql_filter(filter_name, filters, history, get_by_id = False):
+        if history or get_by_id:
             return 'id = :id'
         if filters and filter_name:
             return next(f['expression'] for f in filters if f['name'] == filter_name)
