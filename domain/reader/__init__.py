@@ -117,10 +117,7 @@ class DomainReader:
         if sql_filter and params:
             parser = QueryParser(sql_filter)
             query, params = parser.parse(params)
-            return {
-                'sql_query': query,
-                'query_params': params
-            }
+            return dict(sql_query=query, query_params=params)
 
     @staticmethod
     def _get_response_data(entities, fields, metadata):
