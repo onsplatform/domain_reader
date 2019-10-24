@@ -33,6 +33,8 @@ api.add_route(
 api.add_route(
     settings.BASE_URI[api_version] + '{_map}/{_type}/{_filter}', domain_reader_resource)
 api.add_route(
+    settings.BASE_URI[api_version] + 'count/{_map}/{_type}/{_filter}', domain_reader_resource, suffix='count')
+api.add_route(
     settings.BASE_URI[api_version] + '{_map}/{_type}/history/{id}', domain_history_resource)
 api.add_route(
     settings.BASE_URI[api_version] + 'persist/{_instance_id}', domain_writer_resource)
