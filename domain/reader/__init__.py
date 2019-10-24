@@ -32,7 +32,7 @@ class DomainReader:
 
     def get_history_data(self, _map, _type, filter_name, params):
         schema = self.schema_api.get_schema(_map, _type)
-        data = self._get_data(schema, _map, _type, filter_name, params, history=True)
+        data = self._get_data(schema, _map, _type, filter_name, params, history=True, get_by_id=True)
         if not data:
             data = self._get_data(schema, _map, _type, filter_name, params,
                                   history=False, count=False, get_by_id=True)
@@ -48,7 +48,7 @@ class DomainReader:
 
     def _get_data(self, schema, _map, _type, filter_name, params, history=False, count=False, get_by_id=False):
         if schema:
-            sql_properties = self._get_sql_properties(schema, _map, _type, filter_name, params, history)
+            sql_properties = self._get_sql_properties(schema, _map, _type, filter_name, params, history, get_by_id)
             data = self._execute_query(sql_properties['model'], sql_properties['table'],
                                        sql_properties['branch'], sql_properties['sql_query'],
                                        sql_properties['page'], sql_properties['page_size'], get_by_id, count)
@@ -56,9 +56,9 @@ class DomainReader:
                 return data
             return list(self._get_response_data(data, schema['fields'], schema['metadata']))
 
-    def _get_sql_properties(self, schema, _map, _type, filter_name, params, history):
+    def _get_sql_properties(self, schema, _map, _type, filter_name, params, history, get_by_id=False):
         model = self._get_model(schema['model'], schema['fields'] + schema['metadata'], history)
-        sql_filter = self._get_sql_filter(filter_name, schema['filters'], history)
+        sql_filter = self._get_sql_filter(filter_name, schema['filters'], history, get_by_id)
         branch = params.get('branch')
         table = objects.get(schema, 'model.table')
         page = params.get('page')
@@ -139,8 +139,8 @@ class DomainReader:
         return RemoteMap(model['name'], model['table'], self._get_fields(fields), self.orm, history)
 
     @staticmethod
-    def _get_sql_filter(filter_name, filters, history):
-        if history:
+    def _get_sql_filter(filter_name, filters, history, get_by_id = False):
+        if history or get_by_id:
             return 'id = :id'
         if filters and filter_name:
             return next(f['expression'] for f in filters if f['name'] == filter_name)
