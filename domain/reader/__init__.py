@@ -68,8 +68,8 @@ class DomainReader:
         sql_query = self._get_sql_query(sql_filter, params)
         return dict(model=model, table=table, branch=branch, sql_query=sql_query, page=page, page_size=page_size)
 
-    def _execute_query(self, model, table, branch, sql_query, page, page_size=20, get_by_id=False,
-                       count=False):  # pragma: no cover
+    def _execute_query(self, model, table, branch, sql_query, page, page_size=20,
+                       get_by_id=False, count=False):  # pragma: no cover
         try:
             self.db.connect(reuse_if_open=True)
             with self.db.atomic():
