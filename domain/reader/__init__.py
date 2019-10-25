@@ -15,37 +15,31 @@ class DomainReader(SQLExecutor):
 
     def get_data(self, _map, _type, filter_name, params):
         schema = self.schema_api.get_schema(_map, _type)
-        return self._get_data(schema, filter_name, params)
-
-    def get_history_data(self, _map, _type, filter_name, params):
-        schema = self.schema_api.get_schema(_map, _type)
-        ret = self._get_history_data(schema, filter_name, params)
-        if ret:
-            return ret
-        return self._get_data_by_id(schema, filter_name, params)
-
-    def get_data_count(self, _map, _type, filter_name, params):
-        schema = self.schema_api.get_schema(_map, _type)
-        if schema:
-            sql_properties = self._get_sql_properties(schema, filter_name, params)
-            return self.execute_count_query(**sql_properties)
-
-    def _get_data(self, schema, filter_name, params):
         if schema:
             ret = self.execute_data_query(schema, filter_name, params)
             return list(self._get_response_data(ret, schema['fields'], schema['metadata']))
 
-    def _get_history_data(self, schema, filter_name, params):
+    def get_history_data(self, _map, _type, _id):
+        schema = self.schema_api.get_schema(_map, _type)
+        ret = self._get_history_data(schema, _id)
+        if ret:
+            return ret
+        return list(self._get_data_by_id(schema, _id))
+
+    def get_data_count(self, _map, _type, filter_name, params):
+        schema = self.schema_api.get_schema(_map, _type)
         if schema:
-            sql_properties = self._get_sql_properties(schema, filter_name, params)
-            ret = self.execute_data_query(**sql_properties)
+            return self.execute_count_query(schema, filter_name, params)
+
+    def _get_history_data(self, schema, _id):
+        if schema:
+            ret = self.execute_history_data_query(schema, _id)
             return list(self._get_response_data(ret, schema['fields'], schema['metadata']))
 
-    def _get_data_by_id(self, schema, filter_name, params):
+    def _get_data_by_id(self, schema, _id):
         if schema:
-            sql_properties = self._get_sql_properties(schema, filter_name, params)
-            ret = self.execute_data_query_by_id(**sql_properties)
-            return list(self._get_response_data(ret, schema['fields'], schema['metadata']))
+            ret = self.execute_data_query_by_id(schema, _id)
+            return self._get_response_data(ret, schema['fields'], schema['metadata'])
 
     @staticmethod
     def _get_response_data(entities, fields, metadata):
