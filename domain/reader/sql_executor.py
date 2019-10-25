@@ -52,18 +52,17 @@ class SQLExecutor(SQLExecutorBase):
     def _get_count_query(self, model, user_query_parameters, branch):
         return self._get_query(model, user_query_parameters, branch).count()
 
-    def _get_data_query(self, model, user_query_filter, branch, page, page_size):
+    def _get_data_query(self, model, user_query_filter, branch, page, page_size = 20):
         base_query = self._get_query(model, user_query_filter, branch)
         if page and page_size:
             base_query = base_query.paginate(int(page), int(page_size))
         return base_query
 
     def _get_query(self, model, user_query_filter, branch):
-        if not branch:
-            branch = 'master'
-
         where_statement = ''
-        where_params = (branch, branch,)
+        branch_param = branch or 'master'
+        where_params = (branch_param, branch_param,)
+
         query = model.build(self.db).select()
         user_has_query = self._user_has_query(user_query_filter)
         user_has_params = self._user_has_params(user_query_filter)

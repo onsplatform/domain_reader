@@ -9,7 +9,6 @@ class DomainReader(SQLExecutor):
 
     def __init__(self, orm, db_settings, schema_settings):
         super().__init__(orm, db_settings)
-
         self.schema_api = SchemaApi(schema_settings)
         self._trace_local = lambda v, m: self._DomainReader__log.log(msg=f'{v}:{m}', level=autologging.TRACE)
 
@@ -17,7 +16,7 @@ class DomainReader(SQLExecutor):
         schema = self.schema_api.get_schema(_map, _type)
         if schema:
             ret = self.execute_data_query(schema, filter_name, params)
-            return list(self._get_response_data(ret, schema['fields'], schema['metadata']))
+            return list(self._get_response_data(ret, schema))
 
     def get_history_data(self, _map, _type, _id):
         schema = self.schema_api.get_schema(_map, _type)
@@ -34,15 +33,17 @@ class DomainReader(SQLExecutor):
     def _get_history_data(self, schema, _id):
         if schema:
             ret = self.execute_history_data_query(schema, _id)
-            return list(self._get_response_data(ret, schema['fields'], schema['metadata']))
+            return list(self._get_response_data(ret, schema))
 
     def _get_data_by_id(self, schema, _id):
         if schema:
             ret = self.execute_data_query_by_id(schema, _id)
-            return self._get_response_data(ret, schema['fields'], schema['metadata'])
+            return self._get_response_data(ret, schema)
 
     @staticmethod
-    def _get_response_data(entities, fields, metadata):
+    def _get_response_data(entities, schema):
+        fields = schema['fields']
+        metadata = schema['metadata']
         if entities:
             for entity in entities:
                 dic = {field['alias']: getattr(entity, field['alias']) for field in fields}
