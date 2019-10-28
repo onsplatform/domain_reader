@@ -125,9 +125,7 @@ class DomainHistoryResource(BaseResource):
 
     def on_get(self, req, resp, _map, _type, id):
         if _map:
-            params = self.add_branch_filter(req, req.params)
-            params['id'] = id
-            data = self.controller.get_history_data(_map, _type, 'byId', params)
+            data = self.controller.get_history_data(_map, _type, id)
             return resp.json(data)
 
         return resp.bad_request()

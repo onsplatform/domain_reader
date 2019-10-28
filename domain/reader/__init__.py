@@ -1,143 +1,51 @@
-from peewee import SQL
-from pydash import objects
 import autologging
 
 from platform_sdk.domain.schema.api import SchemaApi
-
-from .mapper import RemoteField, RemoteMap
-from .sql import QueryParser
+from .sql_executor import SQLExecutor
 
 
 @autologging.logged
-class DomainReader:
-    QUERIES = {
-        'not_deleted': '(deleted is null or not deleted)',
-
-        'where_branch': '(branch in (%s, \'master\')) and '
-                        'id not in (select from_id from entities.{table} where from_id is not null and branch=%s) AND '
-    }
+class DomainReader(SQLExecutor):
 
     def __init__(self, orm, db_settings, schema_settings):
-        self.orm = orm
-        self.db_settings = db_settings
+        super().__init__(orm, db_settings)
         self.schema_api = SchemaApi(schema_settings)
-        self._create_db(orm, db_settings)
+        self._trace_local = lambda v, m: self._DomainReader__log.log(msg=f'{v}:{m}', level=autologging.TRACE)
 
-        self._trace_local = lambda v, m: \
-            self._DomainReader__log.log(
-                msg=f'{v}:{m}', level=autologging.TRACE)
-
-    def _create_db(self, orm, db_settings):
-        self.db = orm.db_factory('postgres', **db_settings)()
-
-    def get_history_data(self, _map, _type, filter_name, params):
+    def get_data(self, _map, _type, filter_name, params):
         schema = self.schema_api.get_schema(_map, _type)
-        data = self._get_data(schema, _map, _type, filter_name, params, history=True, get_by_id=True)
-        if not data:
-            data = self._get_data(schema, _map, _type, filter_name, params,
-                                  history=False, count=False, get_by_id=True)
-        return data
-
-    def get_data_count(self, _map, _type, filter_name, params, history=False):
-        schema = self.schema_api.get_schema(_map, _type)
-        return self._get_data(schema, _map, _type, filter_name, params, history, count=True)
-
-    def get_data(self, _map, _type, filter_name, params, history=False):
-        schema = self.schema_api.get_schema(_map, _type)
-        return self._get_data(schema, _map, _type, filter_name, params, history)
-
-    def _get_data(self, schema, _map, _type, filter_name, params, history=False, count=False, get_by_id=False):
         if schema:
-            sql_properties = self._get_sql_properties(schema, _map, _type, filter_name, params, history, get_by_id)
-            data = self._execute_query(sql_properties['model'], sql_properties['table'],
-                                       sql_properties['branch'], sql_properties['sql_query'],
-                                       sql_properties['page'], sql_properties['page_size'], get_by_id, count)
-            if count:
-                return data
-            return list(self._get_response_data(data, schema['fields'], schema['metadata']))
+            ret = self.execute_data_query(schema, filter_name, params)
+            return list(self._get_response_data(ret, schema))
 
-    def _get_sql_properties(self, schema, _map, _type, filter_name, params, history, get_by_id=False):
-        model = self._get_model(schema['model'], schema['fields'] + schema['metadata'], history)
-        sql_filter = self._get_sql_filter(filter_name, schema['filters'], history, get_by_id)
-        branch = params.get('branch')
-        table = objects.get(schema, 'model.table')
-        page = params.get('page')
-        page_size = params.get('page_size')
-        params = {k: v for k, v in params.items() if k and v}
-        self._trace_local('params', params)
-        sql_query = self._get_sql_query(sql_filter, params)
-        return dict(model=model, table=table, branch=branch, sql_query=sql_query, page=page, page_size=page_size)
+    def get_history_data(self, _map, _type, _id):
+        schema = self.schema_api.get_schema(_map, _type)
+        ret = self._get_history_data(schema, _id)
+        if ret:
+            return ret
+        return list(self._get_data_by_id(schema, _id))
 
-    def _execute_query(self, model, table, branch, sql_query, page, page_size=20,
-                       get_by_id=False, count=False):  # pragma: no cover
-        try:
-            self.db.connect(reuse_if_open=True)
-            with self.db.atomic():
-                query_user = ''
-                query_params = ()
-                proxy_model = model.build(self.db)
-                query = proxy_model.select()
-                query_not_deleted = self.QUERIES['not_deleted']
+    def get_data_count(self, _map, _type, filter_name, params):
+        schema = self.schema_api.get_schema(_map, _type)
+        if schema:
+            return self.execute_count_query(schema, filter_name, params)
 
-                if sql_query and sql_query['sql_query']:
-                    query_user = sql_query['sql_query']
-                    query_params = sql_query['query_params']
+    def _get_history_data(self, schema, _id):
+        if schema:
+            ret = self.execute_history_data_query(schema, _id)
+            return list(self._get_response_data(ret, schema))
 
-                if not branch:
-                    branch = 'master'
-                query_branch = self.QUERIES['where_branch'].format(table=table)
-                query_params = (branch, branch,) + query_params
-
-                if query_user != '':
-                    query_not_deleted += ' AND '
-
-                if get_by_id:
-                    query_not_deleted = query_branch = ''
-                    query_params = sql_query['query_params']
-
-                query = query.where(SQL(
-                    query_branch + query_not_deleted + query_user,
-                    query_params
-                ))
-
-                if page and page_size and not count:
-                    query = query.paginate(int(page), int(page_size))
-
-                if count:
-                    query = query.count()
-
-                return query
-        except Exception as e:
-            self._trace_local('##### _execute_query ##### ERROR ', e)
-        finally:
-            self.db.close()
+    def _get_data_by_id(self, schema, _id):
+        if schema:
+            ret = self.execute_data_query_by_id(schema, _id)
+            return self._get_response_data(ret, schema)
 
     @staticmethod
-    def _get_sql_query(sql_filter, params):
-        if sql_filter and params:
-            parser = QueryParser(sql_filter)
-            query, params = parser.parse(params)
-            return dict(sql_query=query, query_params=params)
-
-    @staticmethod
-    def _get_response_data(entities, fields, metadata):
+    def _get_response_data(entities, schema):
+        fields = schema['fields']
+        metadata = schema['metadata']
         if entities:
             for entity in entities:
                 dic = {field['alias']: getattr(entity, field['alias']) for field in fields}
                 dic['_metadata'] = {meta['alias']: getattr(entity, meta['alias']) for meta in metadata}
                 yield dic
-
-    @staticmethod
-    def _get_fields(fields):
-        return [RemoteField(
-            f['alias'], f['field_type'], f['column_name']) for f in fields]
-
-    def _get_model(self, model, fields, history=False):
-        return RemoteMap(model['name'], model['table'], self._get_fields(fields), self.orm, history)
-
-    @staticmethod
-    def _get_sql_filter(filter_name, filters, history, get_by_id = False):
-        if history or get_by_id:
-            return 'id = :id'
-        if filters and filter_name:
-            return next(f['expression'] for f in filters if f['name'] == filter_name)

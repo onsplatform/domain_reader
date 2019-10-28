@@ -1,15 +1,13 @@
-import traceback
-
 from pydash import objects
 from datetime import datetime
+from autologging import logged
 
 from platform_sdk.process_memory import ProcessMemoryApi
-
-from autologging import logged
+from .sql_executor_base import SqlExecutorBase
 
 
 @logged
-class DomainWriter:
+class DomainWriter(SqlExecutorBase):
     QUERIES = {
         'insert': 'INSERT INTO entities.{table} ({columns}) VALUES ({values});',
         'update': 'UPDATE entities.{table} SET {values} WHERE id=%s;',
@@ -21,44 +19,11 @@ class DomainWriter:
         "%": '%%'
     }
 
-    def __init__(self, orm, db_settings, process_memory_settings):
-        self.orm = orm
-        self.db = orm.db_factory('postgres', **db_settings)()
-        self.process_memory_api = ProcessMemoryApi(process_memory_settings)
+    def __init__(self, orm, db_settings, process_memory_settings=None):
+        super().__init__(orm, db_settings)
         self.query_translator = str.maketrans(self.HOLDERS)
-
-    def import_data(self, entities):
-        bulk_sql = self._convert_imported_entity_to_sql(entities)
-        self._execute_query(bulk_sql)
-        return True
-
-    def _convert_imported_entity_to_sql(self, entities):
-        for entity in entities:
-            branch = objects.get(entity, '_metadata.branch')
-            table = entity.pop('_metadata')['type']
-            entity['branch'] = branch
-            columns = ','.join(entity)
-            values = ['%s' for p in entity.values()]
-            params = tuple(p for p in entity.values())
-
-            yield {
-                'query': self.QUERIES['insert'].format(
-                    table=table,
-                    values=str.join(',', values),
-                    columns=columns
-                ),
-                'params': params
-            }
-
-
-    def _mogrify(self, value):
-        if value is None:
-            return 'null'
-
-        translated = value.translate(
-            self.query_translator) if isinstance(value, str) else str(value)
-
-        return f"{translated}"
+        if process_memory_settings:
+            self.process_memory_api = ProcessMemoryApi(process_memory_settings)
 
     def save_data(self, process_memory_id):
         data = self.process_memory_api.get_process_memory_data(process_memory_id)
@@ -67,35 +32,11 @@ class DomainWriter:
         instance_id = objects.get(data, 'instanceId')
 
         if content and entities:
-            bulk_sql = self._get_sql(entities, content, instance_id)
+            bulk_sql = self._get_bulk_sql(entities, content, instance_id)
             self._execute_query(bulk_sql)
             return True
 
-    def _execute_query(self, bulk_sql):  # pragma: no cover
-        try:
-            self.db.connect(reuse_if_open=True)
-            with self.db.atomic():
-                for sql in bulk_sql:
-                    try:
-                        self.db.execute_sql(sql['query'], sql['params'])
-                        # print(sql)
-                    except Exception as e:
-                        print('##### ERROR execute_sql: #####')
-                        traceback.print_exc()
-                        raise e
-        except Exception as e:
-            print('##### ERROR _execute_query #####')
-            traceback.print_exc()
-            raise e
-        finally:
-            self.db.close()
-
-    def _execute_scalar_query(self, sql, params):  # pragma: no cover
-        row = self.db.execute_sql(sql, params).fetchone()
-        if row:
-            return row[0]
-
-    def _get_sql(self, data, schemas, instance_id):
+    def _get_bulk_sql(self, data, schemas, instance_id):
         for _type, entities in data.items():
             if entities:
                 schema = self._get_schema(schemas)[_type]
@@ -107,30 +48,49 @@ class DomainWriter:
                     branch = objects.get(entity, '_metadata.branch')
                     change_track = objects.get(entity, '_metadata.changeTrack')
                     from_id = objects.get(entity, '_metadata.from_id')
+                    yield from self._update_on_master(branch, change_track, entity, fields, instance_id, table)
+                    yield from self._update_on_branch(branch, change_track, entity, fields, from_id, instance_id, table)
+                    yield from self._create(change_track, entity, fields, from_id, table)
 
-                    if change_track:
-                        if change_track in {'update', 'destroy'} and instance_id and branch == 'master':
-                            yield self._get_update_sql(entity['id'], table, entity, fields, change_track)
+    def _update_on_master(self, branch, change_track, entity, fields, instance_id, table):
+        if self._is_update_on_master(branch, change_track, instance_id):
+            yield self._get_update_sql(entity['id'], table, entity, fields, change_track)
 
-                        if change_track in {'update', 'destroy'} and instance_id and branch != 'master':
-                            count_entity = self._execute_scalar_query(
-                                self.QUERIES['count_entity'].format(table=table), (entity['id'],)
-                            )
-                            if count_entity > 0:
-                                yield self._get_update_sql(entity['id'], table, entity, fields, change_track)
-                            else:
-                                yield self._get_insert_sql(table, entity, fields, from_id)
+    def _update_on_branch(self, branch, change_track, entity, fields, from_id, instance_id, table):
+        if self._is_update_on_branch(branch, change_track, instance_id):
+            if self._entity_exists(entity, table):
+                yield self._get_update_sql(entity['id'], table, entity, fields, change_track)
+            else:
+                yield self._get_insert_sql(table, entity, fields, from_id)
 
-                        if change_track == 'create':
-                            yield self._get_insert_sql(table, entity, fields, from_id)
+    def _create(self, change_track, entity, fields, from_id, table):
+        if self._is_create(change_track):
+            yield self._get_insert_sql(table, entity, fields, from_id)
+
+    def _entity_exists(self, entity, table):
+        count_entity = self._execute_scalar_query(
+            self.QUERIES['count_entity'].format(table=table), (entity['id'],)
+        )
+        return count_entity > 0
+
+    @staticmethod
+    def _is_update_on_branch(branch, change_track, instance_id):
+        return change_track and change_track in {'update', 'destroy'} and instance_id and branch != 'master'
+
+    @staticmethod
+    def _is_create(change_track):
+        return change_track and change_track == 'create'
+
+    @staticmethod
+    def _is_update_on_master(branch, change_track, instance_id):
+        return change_track and change_track in {'update', 'destroy'} and instance_id and branch == 'master'
 
     def _get_update_sql(self, entity_id, table, entity, fields, change_track):
         entity['deleted'] = change_track == 'destroy'
         entity['branch'] = objects.get(entity, '_metadata.branch')
         values = [f"{field['column']}=%s" for field in fields]
-        params = tuple(
-            entity[field['name']] if field['name'] in entity else None for field in fields
-        ) + (entity_id, )
+        params = tuple(entity[field['name']] if field['name'] in entity else None for field in fields)
+        params += (entity_id,)  # entity id parameter
         return {
             'query': self.QUERIES['update'].format(
                 table=table,
@@ -141,6 +101,7 @@ class DomainWriter:
     def _get_insert_sql(self, table, entity, fields, from_id):
         if from_id:
             entity['from_id'] = from_id
+
         entity['branch'] = objects.get(entity, '_metadata.branch')
         columns = [field['column'] for field in fields if field['name'] in entity]
         values = ['%s' for field in fields if field['name'] in entity]
@@ -154,7 +115,8 @@ class DomainWriter:
             'params': params
         }
 
-    def _get_schema(self, content):
+    @staticmethod
+    def _get_schema(content):
         schema = {}
         for key in content.keys():
             fields = content[key]['fields']
@@ -168,4 +130,5 @@ class DomainWriter:
                 'table': content[key]['model'],
                 'fields': [{'name': k, 'column': v['column']} for k, v in fields.items()]
             }
+
         return schema
