@@ -59,7 +59,7 @@ class DomainWriter(SqlExecutorBase):
     def _update_on_branch(self, branch, change_track, entity, fields, from_id, instance_id, table):
         if self._is_update_on_branch(branch, change_track, instance_id):
             if self._entity_exists(entity, table):
-                yield self._get_update_sql(entity['id'], table, entity, fields, change_track)
+                yield self._get_update_sql(entity['id'], table, entity, fields, change_track, from_id)
             else:
                 yield self._get_insert_sql(table, entity, fields, from_id)
 
@@ -85,7 +85,10 @@ class DomainWriter(SqlExecutorBase):
     def _is_update_on_master(branch, change_track, instance_id):
         return change_track and change_track in {'update', 'destroy'} and instance_id and branch == 'master'
 
-    def _get_update_sql(self, entity_id, table, entity, fields, change_track):
+    def _get_update_sql(self, entity_id, table, entity, fields, change_track, from_id=None):
+        if from_id:
+            entity['from_id'] = from_id
+
         entity['deleted'] = change_track == 'destroy'
         entity['branch'] = objects.get(entity, '_metadata.branch')
         values = [f"{field['column']}=%s" for field in fields]
