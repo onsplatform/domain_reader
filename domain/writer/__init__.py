@@ -127,6 +127,7 @@ class DomainWriter(SqlExecutorBase):
             fields['meta_instance_id'] = {'name': 'meta_instance_id', 'column': 'meta_instance_id'}
             fields['modified'] = {'name': 'modified', 'column': 'modified'}
             fields['from_id'] = {'name': 'from_id', 'column': 'from_id'}
+            fields['date_created'] = {'name': 'date_created', 'column': 'date_created'}
             fields['branch'] = {'name': 'branch', 'column': 'branch'}
 
             schema[key] = {
