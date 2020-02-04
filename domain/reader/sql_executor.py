@@ -8,7 +8,7 @@ from .sql_executor_base import SQLExecutorBase
 class SQLExecutor(SQLExecutorBase):
     QUERIES = {
         'not_deleted': '(deleted is null or not deleted)',
-        'where_branch': '(branch in (%s, 'master')) AND '
+        'where_branch': '(branch in (%s, \'master\')) AND '
                         'id not in (select from_id from entities.{table} where from_id is not null and branch=%s) AND '
     }
 
