@@ -44,7 +44,6 @@ class DomainWriter(SqlExecutorBase):
                 fields = schema['fields']
                 for entity in entities:
                     entity['meta_instance_id'] = instance_id
-                    entity['modified'] = datetime.now()
                     branch = objects.get(entity, '_metadata.branch')
                     change_track = objects.get(entity, '_metadata.changeTrack')
                     from_id = objects.get(entity, '_metadata.from_id')
@@ -91,6 +90,7 @@ class DomainWriter(SqlExecutorBase):
 
         entity['deleted'] = change_track == 'destroy'
         entity['branch'] = objects.get(entity, '_metadata.branch')
+        entity['modified'] = datetime.now()
         values = [f"{field['column']}=%s" for field in fields]
         params = tuple(entity[field['name']] if field['name'] in entity else None for field in fields)
         params += (entity_id,)  # entity id parameter
