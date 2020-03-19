@@ -113,7 +113,7 @@
         "ons-platform-python-sdk": {
             "editable": true,
             "git": "https://github.com/onsplatform/platform_sdk.git",
-            "ref": "fd9b2ef3acc57568ba7e8427d363c288b596204b"
+            "ref": "b126a2b277b43864cb6204b74b41e83b53a0d105"
         },
         "peewee": {
             "hashes": [
