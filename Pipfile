@@ -19,11 +19,11 @@ requests = "*"
 peewee = "*"
 falcon = "*"
 psycopg2-binary = "*"
-ons-platform-python-sdk = {editable = true, ref = "coreapi_integration",git = "https://github.com/onsplatform/platform_sdk.git"}
 gunicorn = "*"
 pydash = "*"
 autologging = "*"
 celery = "*"
+ons-platform-python-sdk = {editable = true, ref="coreapi_integration", git = "https://github.com/onsplatform/platform_sdk.git"}
 
 [requires]
 python_version = "3.7"
