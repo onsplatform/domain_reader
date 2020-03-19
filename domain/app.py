@@ -29,13 +29,13 @@ domain_writer_resource = resources.DomainWriterResource(domain_writer)
 domain_batch_writer_resource = resources.DomainBatchWriterResource(domain_writer)
 
 api.add_route(
-    settings.BASE_URI[api_version] + '{_map}/{_type}', domain_reader_nofilter_resource)
+    settings.BASE_URI[api_version] + '{_map}/{_version}/{_type}', domain_reader_nofilter_resource)
 api.add_route(
-    settings.BASE_URI[api_version] + '{_map}/{_type}/{_filter}', domain_reader_resource)
+    settings.BASE_URI[api_version] + '{_map}/{_version}/{_type}/{_filter}', domain_reader_resource)
 api.add_route(
-    settings.BASE_URI[api_version] + 'count/{_map}/{_type}/{_filter}', domain_reader_resource, suffix='count')
+    settings.BASE_URI[api_version] + 'count/{_map}/{_version}/{_type}/{_filter}', domain_reader_resource, suffix='count')
 api.add_route(
-    settings.BASE_URI[api_version] + '{_map}/{_type}/history/{id}', domain_history_resource)
+    settings.BASE_URI[api_version] + '{_map}/{_version}/{_type}/history/{id}', domain_history_resource)
 api.add_route(
     settings.BASE_URI[api_version] + 'persist/{_instance_id}', domain_writer_resource)
 api.add_route(

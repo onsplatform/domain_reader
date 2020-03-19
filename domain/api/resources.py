@@ -55,11 +55,11 @@ class DomainReaderResource(BaseResource):
     """
     """
 
-    def on_post(self, req, resp, _map, _type, _filter):
+    def on_post(self, req, resp, _map, _version, _type, _filter):
         if _map:
             try:
                 params = self.add_branch_filter(req, req.json())
-                data = self.controller.get_data(_map, _type, _filter, params)
+                data = self.controller.get_data(_map, _version, _type, _filter, params)
                 return resp.json(data)
             except Exception as e:
                 self._trace_local('###### ERROR ######', e)
@@ -67,11 +67,11 @@ class DomainReaderResource(BaseResource):
 
         return resp.bad_request()
 
-    def on_get(self, req, resp, _map, _type, _filter):
+    def on_get(self, req, resp, _map, _version, _type, _filter):
         if _map:
             try:
                 params = self.add_branch_filter(req, req.params)
-                data = self.controller.get_data(_map, _type, _filter, params)
+                data = self.controller.get_data(_map, _version, _type, _filter, params)
                 return resp.json(data)
             except Exception as e:
                 self._trace_local('###### ERROR ######', e)
@@ -79,11 +79,11 @@ class DomainReaderResource(BaseResource):
 
         return resp.bad_request()
 
-    def on_post_count(self, req, resp, _map, _type, _filter):
+    def on_post_count(self, req, resp, _map, _version, _type, _filter):
         if _map:
             try:
                 params = self.add_branch_filter(req, req.json())
-                data = self.controller.get_data_count(_map, _type, _filter, params)
+                data = self.controller.get_data_count(_map, _version, _type, _filter, params)
                 return resp.json(data)
             except Exception as e:
                 self._trace_local('###### ERROR ######', e)
@@ -91,11 +91,11 @@ class DomainReaderResource(BaseResource):
 
         return resp.bad_request()
 
-    def on_get_count(self, req, resp, _map, _type, _filter):
+    def on_get_count(self, req, resp, _map, _version, _type, _filter):
         if _map:
             try:
                 params = self.add_branch_filter(req, req.params)
-                data = self.controller.get_data_count(_map, _type, _filter, params)
+                data = self.controller.get_data_count(_map, _version, _type, _filter, params)
                 return resp.json(data)
             except Exception as e:
                 self._trace_local('###### ERROR ######', e)
@@ -110,11 +110,11 @@ class DomainReaderNoFilterResource(DomainReaderResource):
     """
     """
 
-    def on_post(self, req, resp, _map, _type):
-        return super().on_post(req, resp, _map, _type, None)
+    def on_post(self, req, resp, _map, _version, _type):
+        return super().on_post(req, resp, _map, _version, _type, None)
 
-    def on_get(self, req, resp, _map, _type):
-        return super().on_get(req, resp, _map, _type, None)
+    def on_get(self, req, resp, _map, _version, _type):
+        return super().on_get(req, resp, _map, _version, _type, None)
 
 
 @autologging.traced
@@ -123,9 +123,9 @@ class DomainHistoryResource(BaseResource):
     """
     """
 
-    def on_get(self, req, resp, _map, _type, id):
+    def on_get(self, req, resp, _map, _version, _type, id):
         if _map:
-            data = self.controller.get_history_data(_map, _type, id)
+            data = self.controller.get_history_data(_map, _version, _type, id)
             return resp.json(data)
 
         return resp.bad_request()
