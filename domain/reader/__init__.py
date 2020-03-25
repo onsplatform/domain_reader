@@ -25,8 +25,8 @@ class DomainReader(SQLExecutor):
             return ret
         return list(self._get_data_by_id(schema, _id))
 
-    def get_data_count(self, _map, _type, filter_name, params):
-        schema = self.schema_api.get_schema(_map, _type)
+    def get_data_count(self, _map, _version, _type, filter_name, params):
+        schema = self.schema_api.get_schema(_map, _version, _type)
         if schema:
             return self.execute_count_query(schema, filter_name, params)
 
