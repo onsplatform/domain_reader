@@ -105,10 +105,15 @@ class DomainWriter(SqlExecutorBase):
         if from_id:
             entity['from_id'] = from_id
 
+        fields.append({'name': 'id', 'column':'id'})
+        
         entity['branch'] = objects.get(entity, '_metadata.branch')
         columns = [field['column'] for field in fields if field['name'] in entity]
+
         values = ['%s' for field in fields if field['name'] in entity]
+
         params = tuple(entity[field['name']] for field in fields if field['name'] in entity)
+
         return {
             'query': self.QUERIES['insert'].format(
                 table=table,
