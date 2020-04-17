@@ -105,7 +105,8 @@ class DomainWriter(SqlExecutorBase):
         if from_id:
             entity['from_id'] = from_id
 
-        fields.append({'name': 'id', 'column':'id'})
+        if not any(field.get('column') == 'id' for field in fields):
+            fields.append({'name': 'id', 'column':'id'})
         
         entity['branch'] = objects.get(entity, '_metadata.branch')
         columns = [field['column'] for field in fields if field['name'] in entity]
