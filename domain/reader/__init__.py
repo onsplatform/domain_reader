@@ -15,7 +15,7 @@ class DomainReader(SQLExecutor):
     def get_data(self, _map, _version, _type, filter_name, params):
         schema = self.schema_api.get_schema(_map, _version, _type)
         if schema:
-            ret = self.execute_data_query(schema, filter_name, params)
+            ret = self.execute_data_querymodel_branch(schema, filter_name, params)
             return list(self._get_response_data(ret, schema))
 
     def get_history_data(self, _map, _version, _type, _id):
