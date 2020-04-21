@@ -36,36 +36,27 @@ class SQLExecutor(SQLExecutorBase):
 
         model = self._get_model_from_schema(schema)
         model_build = model.build(self.db)
-        query = model_build.select()
-        where_statement = self._get_where_statement(model, user_query_filter, True)
-        where_params = self._get_where_params(branch, user_query_filter, True)
-        query = query.where(SQL(where_statement, where_params))
 
-        query_from_id = model_build.select(model_build.from_id).distinct()
-        where_statement = self._get_where_statement(model, user_query_filter, True)
-        where_params = self._get_where_params(branch, user_query_filter, True)
-        query_from_id = query_from_id.where(SQL(where_statement, where_params))
-
-        data_disabled = '2020-04-19 21:01:03'
+        data_disabled = '2020-04-20 20:01:02'
 
         query_master = model_build.select()
-        where_statement = self._get_where_statement(model, user_query_filter, True)
-        where_params = self._get_where_params('master', user_query_filter, True)
-        query_master = query_master.where(SQL(where_statement, where_params)) \
-            .where(
-            SQL('((modified is null and date_created <= %s) or modified <= %s)', (data_disabled, data_disabled,))) \
-            .where(model_build.id.not_in(query_from_id))
+        where_statement = self._get_where_statement(model, user_query_filter)
+        where_params = self._get_where_params(branch, user_query_filter)
+        query_master = query_master.where(SQL('((modified is null and date_created <= %s) or modified <= %s)',
+                                              (data_disabled, data_disabled,))) \
+            .where(SQL(where_statement, where_params))
 
         model_history = self._get_model_from_schema(schema, True)
         model_history_build = model_history.build(self.db)
         query_master_history = model_history_build.select()
-        where_statement = self._get_where_statement(model_history, user_query_filter, True)
-        where_params = self._get_where_params('master', user_query_filter, True)
-        query_master_history = query_master_history.where(SQL(where_statement, where_params)) \
-            .where(
-            SQL('(%s between COALESCE(modified, date_created) and modified_until)', (data_disabled,)))
+        where_statement = self._get_where_statement(model_history, user_query_filter)
+        where_params = self._get_where_params(branch, user_query_filter)
+        query_master_history = query_master_history.where(
+            SQL('(%s between COALESCE(modified, date_created) and modified_until)',
+                (data_disabled,))) \
+            .where(SQL(where_statement, where_params))
 
-        query = query.union(query_master).union(query_master_history)
+        query = query_master.union(query_master_history).order_by(model_build.modified_at)
 
         if page and page_size:
             query = query.paginate(int(page), int(page_size))
