@@ -1,3 +1,6 @@
+import pytz
+import datetime
+
 from peewee import SQL
 
 from .sql import QueryParser
@@ -29,22 +32,21 @@ class SQLExecutor(SQLExecutorBase):
             query = query.paginate(int(page), int(page_size))
         return self._execute_query(query)
 
-    def execute_data_query_disabled_branch(self, schema, filter_name, params):
+    def execute_data_query_at_time(self, schema, filter_name, params, date_validity):
+        date_validity = datetime.datetime.strptime(date_validity, '%Y-%m-%dT%H:%M:%SZ')
+        pst = pytz.timezone('Etc/GMT-3')
+        date_validity = pst.localize(date_validity)
         branch, page, page_size = self._get_default_params(params)
-
         user_query_filter = self._get_user_query_filter(schema['filters'], filter_name, params)
 
         model = self._get_model_from_schema(schema)
         model_build = model.build(self.db)
-
-        data_disabled = '2020-04-20 20:01:02'
-
         query_master = model_build.select()
         where_statement = self._get_where_statement(model, user_query_filter)
         where_params = self._get_where_params(branch, user_query_filter)
-        query_master = query_master.where(SQL('((modified is null and date_created <= %s) or modified <= %s)',
-                                              (data_disabled, data_disabled,))) \
-            .where(SQL(where_statement, where_params))
+        query_master = query_master.where(
+            SQL('((modified is null and date_created <= %s) or modified <= %s)', (date_validity, date_validity,))
+        ).where(SQL(where_statement, where_params))
 
         model_history = self._get_model_from_schema(schema, True)
         model_history_build = model_history.build(self.db)
@@ -52,15 +54,12 @@ class SQLExecutor(SQLExecutorBase):
         where_statement = self._get_where_statement(model_history, user_query_filter)
         where_params = self._get_where_params(branch, user_query_filter)
         query_master_history = query_master_history.where(
-            SQL('(%s between COALESCE(modified, date_created) and modified_until)',
-                (data_disabled,))) \
-            .where(SQL(where_statement, where_params))
+            SQL('(%s between COALESCE(modified, date_created) and modified_until)', (date_validity,))
+        ).where(SQL(where_statement, where_params))
 
         query = query_master.union(query_master_history).order_by(model_build.modified_at)
-
         if page and page_size:
             query = query.paginate(int(page), int(page_size))
-
         return self._execute_query(query)
 
     def _get_default_params(self, params):
