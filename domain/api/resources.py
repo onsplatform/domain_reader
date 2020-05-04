@@ -48,6 +48,40 @@ class DomainWriterResource(BaseResource):
 
         return resp.accepted()
 
+@autologging.traced
+@autologging.logged
+class DomainReaderInstanceFilterResource(BaseResource):
+    """
+    """
+    def get_entities_from_table(self, entities, table):
+        return (entity for entity in entities if entity['_metadata']['table'] == table)
+
+    def on_post(self, req, resp):
+        try:
+            result = set()
+            entities = req.json()['entities']
+            filters = req.json()['filters']
+
+            # executar filtros e ver se alguma das entidades está presente no resultado do filtro
+            for filter in filters:
+                data = self.controller.get_data(filter['app'],
+                                         filter['header']['version'],
+                                         filter['type'],
+                                         filter['filter_name'],
+                                         filter['params'])
+
+                entities_from_table = get_entities_from_table(entities, filter['table'])
+
+                for entity in entities_from_table:
+                    if entity['id'] in [data_item['id'] for data_item in data]:
+                        result.add(filter['header']['instanceId'])
+
+            return resp.json(result)
+        except Exception as e:
+            self._trace_local('###### ERROR ######', e)
+            return resp.internal_error("error, see stack")
+
+        return resp.bad_request()
 
 @autologging.traced
 @autologging.logged

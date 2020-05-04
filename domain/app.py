@@ -23,6 +23,7 @@ domain_reader = DomainReader(settings.ORM, settings.DATABASE, settings.SCHEMA)
 domain_writer = DomainWriter(settings.ORM, settings.DATABASE, settings.PROCESS_MEMORY)
 
 domain_reader_resource = resources.DomainReaderResource(domain_reader)
+domain_reader_instance_filter_resource = resources.DomainReaderInstanceFilterResource(domain_reader)
 domain_reader_nofilter_resource = resources.DomainReaderNoFilterResource(domain_reader)
 domain_history_resource = resources.DomainHistoryResource(domain_reader)
 domain_writer_resource = resources.DomainWriterResource(domain_writer)
@@ -40,3 +41,6 @@ api.add_route(
     settings.BASE_URI[api_version] + 'persist/{_instance_id}', domain_writer_resource)
 api.add_route(
     settings.BASE_URI_WRITER[api_version] + 'batch/persist', domain_batch_writer_resource)
+api.add_route(
+    settings.BASE_URI[api_version] + 'instanceswhichquerieswouldreturnentity', domain_reader_instance_filter_resource)
+
