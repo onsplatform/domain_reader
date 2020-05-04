@@ -17,7 +17,7 @@ DATABASE = {
 }
 
 SCHEMA = {
-    'uri': os.environ.get('SCHEMA_URI', 'http://localhost:8002/api/v1/entitymap/'),
+    'uri': os.environ.get('SCHEMA_URI', 'http://localhost:9092/api/v1/'),
 }
 
 PROCESS_MEMORY = {

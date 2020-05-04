@@ -48,40 +48,50 @@ class DomainWriterResource(BaseResource):
 
         return resp.accepted()
 
+
 @autologging.traced
 @autologging.logged
 class DomainReaderInstanceFilterResource(BaseResource):
     """
     """
+
+    def __init__(self, controller):
+        self.controller = controller
+        self._trace_local = lambda v, m: \
+            self._DomainReaderInstanceFilterResource__log.log(
+                msg=f'{v}:{m}', level=autologging.TRACE)
+
     def get_entities_from_table(self, entities, table):
-        return (entity for entity in entities if entity['_metadata']['table'] == table)
+        return [entity for entity in entities if entity['data']['_metadata']['table'] == table]
 
     def on_post(self, req, resp):
         try:
-            result = set()
-            entities = req.json()['entities']
-            filters = req.json()['filters']
+            request = req.json()
+            filters = request['filters']
+            entities = request['entities']
 
-            # executar filtros e ver se alguma das entidades está presente no resultado do filtro
             for filter in filters:
                 data = self.controller.get_data(filter['app'],
-                                         filter['header']['version'],
-                                         filter['type'],
-                                         filter['filter_name'],
-                                         filter['params'])
+                                                filter['header']['version'],
+                                                filter['type'],
+                                                filter['filter_name'],
+                                                filter['params'])
+                result = set()
 
-                entities_from_table = get_entities_from_table(entities, filter['table'])
+                if data:
+                    entities_from_table = self.get_entities_from_table(entities, filter['table'])
+                    for entity in entities_from_table:
+                        if entity['data']['id'] in [data_item['id'] for data_item in data]:
+                            result.add(filter['header']['instanceId'])
 
-                for entity in entities_from_table:
-                    if entity['id'] in [data_item['id'] for data_item in data]:
-                        result.add(filter['header']['instanceId'])
-
-            return resp.json(result)
+                if result:
+                    return resp.json(result)
         except Exception as e:
             self._trace_local('###### ERROR ######', e)
             return resp.internal_error("error, see stack")
 
         return resp.bad_request()
+
 
 @autologging.traced
 @autologging.logged
