@@ -71,17 +71,17 @@ class DomainReaderInstanceFilterResource(BaseResource):
             entities = request['entities']
 
             for filter in filters:
-                data = self.controller.get_data(filter['app'],
+                data = self.controller.get_data_from_table(filter['app'],
                                                 filter['version'],
                                                 filter['type'],
                                                 filter['filter_name'],
                                                 filter['params'])
                 result = set()
 
-                if data:
-                    entities_from_table = self.get_entities_from_table(entities, filter['table'])
+                if data['data']:
+                    entities_from_table = self.get_entities_from_table(entities, data['table'])
                     for entity in entities_from_table:
-                        if entity['data']['id'] in [data_item['id'] for data_item in data]:
+                        if entity['data']['id'] in [data_item['id'] for data_item in data['data']]:
                             result.add(filter['instanceId'])
 
                 if result:
