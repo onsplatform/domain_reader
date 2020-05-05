@@ -72,7 +72,7 @@ class DomainReaderInstanceFilterResource(BaseResource):
 
             for filter in filters:
                 data = self.controller.get_data(filter['app'],
-                                                filter['header']['version'],
+                                                filter['version'],
                                                 filter['type'],
                                                 filter['filter_name'],
                                                 filter['params'])
@@ -82,7 +82,7 @@ class DomainReaderInstanceFilterResource(BaseResource):
                     entities_from_table = self.get_entities_from_table(entities, filter['table'])
                     for entity in entities_from_table:
                         if entity['data']['id'] in [data_item['id'] for data_item in data]:
-                            result.add(filter['header']['instanceId'])
+                            result.add(filter['instanceId'])
 
                 if result:
                     return resp.json(result)
