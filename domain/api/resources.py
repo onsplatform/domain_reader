@@ -153,7 +153,6 @@ class DomainReaderInstanceFilterResource(DomainReaderResource):
                                                 filter['filter_name'],
                                                 filter['params'])
                 result = set()
-
                 if data['data']:
                     entities_from_table = self.get_entities_from_table(entities, data['table'])
                     for entity in entities_from_table:
@@ -161,6 +160,7 @@ class DomainReaderInstanceFilterResource(DomainReaderResource):
                             result.add(filter['instance_id'])
 
                 if result:
+
                     return resp.json(list(result))
         except Exception as e:
             return resp.internal_error("error, see stack")
