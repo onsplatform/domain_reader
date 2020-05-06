@@ -82,12 +82,10 @@ class DomainReaderInstanceFilterResource(BaseResource):
                     entities_from_table = self.get_entities_from_table(entities, data['table'])
                     for entity in entities_from_table:
                         if str(entity['id']) in [str(data_item['id']) for data_item in data['data']]:
-                            self._trace_local('filter: ', filter)
                             result.add(filter['instance_id'])
 
                 if result:
-                    self._trace_local('result', result)
-                    return resp.json(result)
+                    return resp.json(list(result))
         except Exception as e:
             self._trace_local('###### ERROR ######', e)
             return resp.internal_error("error, see stack")
