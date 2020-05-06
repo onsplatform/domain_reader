@@ -62,7 +62,7 @@ class DomainReaderInstanceFilterResource(BaseResource):
                 msg=f'{v}:{m}', level=autologging.TRACE)
 
     def get_entities_from_table(self, entities, table):
-        return [entity for entity in entities if entity['data']['_metadata']['table'] == table]
+        return [entity for entity in entities if entity['_metadata']['table'] == table]
 
     def on_post(self, req, resp):
         try:
