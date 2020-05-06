@@ -13,6 +13,7 @@ class BaseResource:
         self._trace_local = lambda v, m: \
             self._DomainReaderResource__log.log(
                 msg=f'{v}:{m}', level=autologging.TRACE)
+            
 
     @staticmethod
     def add_branch_filter(req, params):
@@ -51,9 +52,15 @@ class DomainWriterResource(BaseResource):
 
 @autologging.traced
 @autologging.logged
-class DomainReaderInstanceFilterResource(BaseResource):
+class DomainReaderInstanceFilterResource():
     """
     """
+    def __init__(self, controller):
+        self.controller = controller
+        # wrapping local tracer
+        self._trace_local = lambda v, m: \
+            self._DomainReaderResource__log.log(
+                msg=f'{v}:{m}', level=autologging.TRACE)
 
     def get_entities_from_table(self, entities, table):
         return [entity for entity in entities if entity['_metadata']['table'] == table]
@@ -79,7 +86,7 @@ class DomainReaderInstanceFilterResource(BaseResource):
                             result.add(filter['instance_id'])
 
                 if result:
-                    self._trace_local('result', list(result))
+                    self._trace_local('result', result)
                     return resp.json(list(result))
         except Exception as e:
             self._trace_local('###### ERROR ######', e)
