@@ -77,7 +77,7 @@ class DomainReaderInstanceFilterResource(BaseResource):
                                                 filter['filter_name'],
                                                 filter['params'])
                 result = set()
-
+                self._trace_local('Data', data)
                 if data['data']:
                     entities_from_table = self.get_entities_from_table(entities, data['table'])
                     for entity in entities_from_table:
