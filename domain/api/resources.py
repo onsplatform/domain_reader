@@ -52,7 +52,7 @@ class DomainWriterResource(BaseResource):
 
 @autologging.traced
 @autologging.logged
-class DomainReaderInstanceFilterResource(BaseResource):
+class DomainReaderInstanceFilterResource(DomainReaderResource):
     """
     """
 
