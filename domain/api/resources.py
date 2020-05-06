@@ -81,7 +81,7 @@ class DomainReaderInstanceFilterResource(BaseResource):
                 if data['data']:
                     entities_from_table = self.get_entities_from_table(entities, data['table'])
                     for entity in entities_from_table:
-                        if entity['id'] in [data_item['id'] for data_item in data['data']]:
+                        if str(entity['id']) in [str(data_item['id']) for data_item in data['data']]:
                             result.add(filter['instanceId'])
 
                 if result:
