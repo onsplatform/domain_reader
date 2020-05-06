@@ -145,23 +145,22 @@ class DomainReaderInstanceFilterResource(DomainReaderResource):
             request = req.json()
             filters = request['filters']
             entities = request['entities']
-
+            
+            result = set()
             for filter in filters:
                 data = self.controller.get_data_from_table(filter['app'],
                                                 filter['version'],
                                                 filter['type'],
                                                 filter['filter_name'],
                                                 filter['params'])
-                result = set()
+
                 if data['data']:
                     entities_from_table = self.get_entities_from_table(entities, data['table'])
                     for entity in entities_from_table:
                         if str(entity['id']) in [str(data_item['id']) for data_item in data['data']]:
                             result.add(filter['instance_id'])
 
-                if result:
-
-                    return resp.json(list(result))
+            return resp.json(list(result))
         except Exception as e:
             return resp.internal_error("error, see stack")
 
