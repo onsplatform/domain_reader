@@ -85,6 +85,7 @@ class DomainReaderInstanceFilterResource(BaseResource):
                             result.add(filter['instance_id'])
 
                 if result:
+                    self._trace_local('result', list(result))
                     return resp.json(list(result))
         except Exception as e:
             self._trace_local('###### ERROR ######', e)
