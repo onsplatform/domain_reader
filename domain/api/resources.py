@@ -55,12 +55,6 @@ class DomainReaderInstanceFilterResource(BaseResource):
     """
     """
 
-    def __init__(self, controller):
-        self.controller = controller
-        self._trace_local = lambda v, m: \
-            self._DomainReaderInstanceFilterResource__log.log(
-                msg=f'{v}:{m}', level=autologging.TRACE)
-
     def get_entities_from_table(self, entities, table):
         return [entity for entity in entities if entity['_metadata']['table'] == table]
 
@@ -105,6 +99,7 @@ class DomainReaderResource(BaseResource):
             try:
                 params = self.add_branch_filter(req, req.json())
                 data = self.controller.get_data(_map, _version, _type, _filter, params)
+                
                 return resp.json(data)
             except Exception as e:
                 self._trace_local('###### ERROR ######', e)
