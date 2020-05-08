@@ -54,4 +54,6 @@ class DomainReader(SQLExecutor):
             for entity in entities:
                 dic = {field['alias']: getattr(entity, field['alias']) for field in fields}
                 dic['_metadata'] = {meta['alias']: getattr(entity, meta['alias']) for meta in metadata}
+                dic['_metadata']['type'] = schema['name']
+                dic['_metadata']['table'] = schema['model']['table']
                 yield dic
