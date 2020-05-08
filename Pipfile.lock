@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "17b004938e89e76fce738177fb72bbb36277848555066b4b8d7547d0dff3274a"
+            "sha256": "9e6df3a5e14eaaa74a29201d098271ed7a73e32cd8892c7e237b3981a519207b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -113,7 +113,7 @@
         "ons-platform-python-sdk": {
             "editable": true,
             "git": "https://github.com/onsplatform/platform_sdk.git",
-            "ref": "d2091b77f93cfee22d9e6e9a68ff0cdb31677efa"
+            "ref": "9f79721a6789f7355fd0cb960d9968d7aaf10611"
         },
         "peewee": {
             "hashes": [
@@ -422,11 +422,11 @@
         },
         "pytest": {
             "hashes": [
-                "sha256:0e5b30f5cb04e887b91b1ee519fa3d89049595f428c1db76e73bd7f17b09b172",
-                "sha256:84dde37075b8805f3d1f392cc47e38a0e59518fb46a431cfdaf7cf1ce805f970"
+                "sha256:95c710d0a72d91c13fae35dce195633c929c3792f54125919847fdcdf7caa0d3",
+                "sha256:eb2b5e935f6a019317e455b6da83dd8650ac9ffd2ee73a7b657a30873d67a698"
             ],
             "index": "pypi",
-            "version": "==5.4.1"
+            "version": "==5.4.2"
         },
         "pytest-cov": {
             "hashes": [
