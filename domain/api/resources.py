@@ -3,13 +3,11 @@ import autologging
 from domain.writer import import_task
 
 
+@autologging.traced
+@autologging.logged
 class BaseResource:
-    """
-    """
-
     def __init__(self, controller):
         self.controller = controller
-        # wrapping local tracer
         self._trace_local = lambda v, m: \
             self._DomainReaderResource__log.log(
                 msg=f'{v}:{m}', level=autologging.TRACE)
@@ -18,6 +16,13 @@ class BaseResource:
     def add_branch_filter(req, params):
         if req.get_header('Branch'):
             params['branch'] = req.get_header('Branch')
+        return params
+
+    @staticmethod
+    def add_reproduction_id(req, params):
+        if req.get_header('ReproductionId'):
+            params['reproduction_id'] = req.get_header('ReproductionId')
+            params['reproduction_date'] = req.get_header('ReproductionDate')
         return params
 
 
@@ -59,6 +64,7 @@ class DomainReaderResource(BaseResource):
         if _map:
             try:
                 params = self.add_branch_filter(req, req.json())
+                params = self.add_reproduction_id(req, params)
                 data = self.controller.get_data(_map, _version, _type, _filter, params)
                 return resp.json(data)
             except Exception as e:
@@ -71,6 +77,7 @@ class DomainReaderResource(BaseResource):
         if _map:
             try:
                 params = self.add_branch_filter(req, req.params)
+                params = self.add_reproduction_id(req, params)
                 data = self.controller.get_data(_map, _version, _type, _filter, params)
                 return resp.json(data)
             except Exception as e:
@@ -83,6 +90,7 @@ class DomainReaderResource(BaseResource):
         if _map:
             try:
                 params = self.add_branch_filter(req, req.json())
+                params = self.add_reproduction_id(req, params)
                 data = self.controller.get_data_count(_map, _version, _type, _filter, params)
                 return resp.json(data)
             except Exception as e:
@@ -95,6 +103,7 @@ class DomainReaderResource(BaseResource):
         if _map:
             try:
                 params = self.add_branch_filter(req, req.params)
+                params = self.add_reproduction_id(req, params)
                 data = self.controller.get_data_count(_map, _version, _type, _filter, params)
                 return resp.json(data)
             except Exception as e:

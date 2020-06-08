@@ -24,6 +24,9 @@ class SQLExecutor(SQLExecutorBase):
         return self._execute_query(self._get_query_by_id(model, _id))
 
     def execute_data_query(self, schema, filter_name, params):
+        if params['reproduction_id']:
+            return self.execute_reproduction_data_query(schema, filter_name, params)
+
         branch, page, page_size = self._get_default_params(params)
         model = self._get_model_from_schema(schema)
         user_query_filter = self._get_user_query_filter(schema['filters'], filter_name, params)
@@ -32,35 +35,61 @@ class SQLExecutor(SQLExecutorBase):
             query = query.paginate(int(page), int(page_size))
         return self._execute_query(query)
 
+    def execute_reproduction_data_query(self, schema, filter_name, params):
+        branch, page, page_size = self._get_default_params(params)
+        query_at_time = self._get_query_at_time(params['reproduction_date'], filter_name, params, schema)
+        data_at_time = self._execute_query(query_at_time)
+
+        user_query_filter = self._get_user_query_filter(schema['filters'], filter_name, params)
+        model = self._get_model_from_schema(schema)
+        model_build = model.build(self.db)
+        reproduction_data_query = model_build.select().where(SQL('reproduction_id == %s', params['reproduction_id']))
+        where_statement = self._get_where_statement(model, user_query_filter)
+        where_params = self._get_where_params(branch, user_query_filter)
+        reproduction_data_query = reproduction_data_query.where(SQL(where_statement, where_params))
+        reproduction_data = self._execute_query(reproduction_data_query)
+
+        reproduction_data = (item['reproduction_from_id'] for item in reproduction_data)
+
+        not_override = [data for data in data_at_time if data['id'] not in reproduction_data] + data_at_time
+
+        if page and page_size:
+            offset = (page - 1) * page_size
+            not_override = not_override[offset:page_size]
+        return not_override
+
     def execute_data_query_at_time(self, schema, filter_name, params, date_validity):
+        query = self._get_query_at_time(date_validity, filter_name, params, schema)
+        branch, page, page_size = self._get_default_params(params)
+        query = query.order_by('modified_at')
+        if page and page_size:
+            query = query.paginate(int(page), int(page_size))
+        return self._execute_query(query)
+
+    def _get_query_at_time(self, date_validity, filter_name, params, schema):
         date_validity = datetime.datetime.strptime(date_validity, '%Y-%m-%dT%H:%M:%SZ')
         pst = pytz.timezone('Etc/GMT-3')
         date_validity = pst.localize(date_validity)
         branch, page, page_size = self._get_default_params(params)
         user_query_filter = self._get_user_query_filter(schema['filters'], filter_name, params)
-
         model = self._get_model_from_schema(schema)
         model_build = model.build(self.db)
-        query_master = model_build.select()
+        query_master = model_build.select().where(SQL('reproduction_id is null'))
         where_statement = self._get_where_statement(model, user_query_filter)
         where_params = self._get_where_params(branch, user_query_filter)
         query_master = query_master.where(
             SQL('((modified is null and date_created <= %s) or modified <= %s)', (date_validity, date_validity,))
         ).where(SQL(where_statement, where_params))
-
         model_history = self._get_model_from_schema(schema, True)
         model_history_build = model_history.build(self.db)
-        query_master_history = model_history_build.select()
+        query_master_history = model_history_build.select().where(SQL('reproduction_id is null'))
         where_statement = self._get_where_statement(model_history, user_query_filter)
         where_params = self._get_where_params(branch, user_query_filter)
         query_master_history = query_master_history.where(
             SQL('(%s between COALESCE(modified, date_created) and modified_until)', (date_validity,))
         ).where(SQL(where_statement, where_params))
-
-        query = query_master.union(query_master_history).order_by(model_build.modified_at)
-        if page and page_size:
-            query = query.paginate(int(page), int(page_size))
-        return self._execute_query(query)
+        query = query_master.union(query_master_history)
+        return query
 
     def _get_default_params(self, params):
         page = params.get('page')

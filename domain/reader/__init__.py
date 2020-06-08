@@ -18,6 +18,8 @@ class DomainReader(SQLExecutor):
             branch = self.schema_api.get_branch(params.get('branch'))
             if branch['disabled']:
                 ret = self.execute_data_query_at_time(schema, filter_name, params, branch['disabled'])
+            elif filter_name == 'byId':
+                ret = self.execute_data_query_by_id(schema, params['Id'])
             else:
                 ret = self.execute_data_query(schema, filter_name, params)
             return list(self._get_response_data(ret, schema))
@@ -30,6 +32,7 @@ class DomainReader(SQLExecutor):
         return list(self._get_data_by_id(schema, _id))
 
     def get_data_count(self, _map, _version, _type, filter_name, params):
+        # aplicar desativação cenario
         schema = self.schema_api.get_schema(_map, _version, _type)
         if schema:
             return self.execute_count_query(schema, filter_name, params)
