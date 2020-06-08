@@ -11,6 +11,7 @@ class BaseResource:
         self._trace_local = lambda v, m: \
             self._DomainReaderResource__log.log(
                 msg=f'{v}:{m}', level=autologging.TRACE)
+            
 
     @staticmethod
     def add_branch_filter(req, params):
@@ -53,7 +54,6 @@ class DomainWriterResource(BaseResource):
 
         return resp.accepted()
 
-
 @autologging.traced
 @autologging.logged
 class DomainReaderResource(BaseResource):
@@ -66,6 +66,7 @@ class DomainReaderResource(BaseResource):
                 params = self.add_branch_filter(req, req.json())
                 params = self.add_reproduction_id(req, params)
                 data = self.controller.get_data(_map, _version, _type, _filter, params)
+                
                 return resp.json(data)
             except Exception as e:
                 self._trace_local('###### ERROR ######', e)
@@ -136,5 +137,40 @@ class DomainHistoryResource(BaseResource):
         if _map:
             data = self.controller.get_history_data(_map, _version, _type, id)
             return resp.json(data)
+
+        return resp.bad_request()
+
+@autologging.traced
+@autologging.logged
+class DomainReaderInstanceFilterResource(DomainReaderResource):
+    """
+    """
+
+    def get_entities_from_table(self, entities, table):
+        return [entity for entity in entities if entity['_metadata']['table'] == table]
+
+    def on_post(self, req, resp):
+        try:
+            request = req.json()
+            filters = request['filters']
+            entities = request['entities']
+            
+            result = set()
+            for filter in filters:
+                data = self.controller.get_data_from_table(filter['app'],
+                                                filter['version'],
+                                                filter['type'],
+                                                filter['filter_name'],
+                                                filter['params'])
+
+                if data['data']:
+                    entities_from_table = self.get_entities_from_table(entities, data['table'])
+                    for entity in entities_from_table:
+                        if str(entity['id']) in [str(data_item['id']) for data_item in data['data']]:
+                            result.add(filter['instance_id'])
+
+            return resp.json(list(result))
+        except Exception as e:
+            return resp.internal_error("error, see stack")
 
         return resp.bad_request()
