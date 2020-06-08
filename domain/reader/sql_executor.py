@@ -19,12 +19,12 @@ class SQLExecutor(SQLExecutorBase):
     def __init__(self, orm, db_settings):
         super().__init__(orm, db_settings)
 
-    def execute_data_query_by_id(self, schema, _id):
+    def execute_data_query_by_id(self, schema, params):
         model = self._get_model_from_schema(schema)
-        return self._execute_query(self._get_query_by_id(model, _id))
+        return self._execute_query(self._get_query_by_id(model, params['id']))
 
     def execute_data_query(self, schema, filter_name, params):
-        if params['reproduction_id']:
+        if 'reproduction_id' in params:
             return self.execute_reproduction_data_query(schema, filter_name, params)
 
         branch, page, page_size = self._get_default_params(params)
@@ -43,15 +43,17 @@ class SQLExecutor(SQLExecutorBase):
         user_query_filter = self._get_user_query_filter(schema['filters'], filter_name, params)
         model = self._get_model_from_schema(schema)
         model_build = model.build(self.db)
-        reproduction_data_query = model_build.select().where(SQL('reproduction_id == %s', params['reproduction_id']))
+        reproduction_data_query = model_build.select().where(SQL('reproduction_id = %s', (params['reproduction_id'],)))
         where_statement = self._get_where_statement(model, user_query_filter)
         where_params = self._get_where_params(branch, user_query_filter)
         reproduction_data_query = reproduction_data_query.where(SQL(where_statement, where_params))
         reproduction_data = self._execute_query(reproduction_data_query)
 
-        reproduction_data = (item['reproduction_from_id'] for item in reproduction_data)
+        reproduction_data_from_ids = [item.reproduction_from_id for item in list(reproduction_data) if
+                                      item.reproduction_from_id]
 
-        not_override = [data for data in data_at_time if data['id'] not in reproduction_data] + data_at_time
+        not_override = [data for data in list(data_at_time) if data.id not in reproduction_data_from_ids] + \
+                       list(reproduction_data)
 
         if page and page_size:
             offset = (page - 1) * page_size
@@ -126,7 +128,7 @@ class SQLExecutor(SQLExecutorBase):
         query = model.build(self.db).select()
         where_statement = self._get_where_statement(model, user_query_filter, specific_branch)
         where_params = self._get_where_params(branch, user_query_filter, specific_branch)
-        return query.where(SQL(where_statement, where_params))
+        return query.where(SQL(where_statement, where_params)).where(SQL('reproduction_id is null'))
 
     def _get_where_params(self, branch, user_query_filter, specific_branch=False):
         branch_param = branch or 'master'

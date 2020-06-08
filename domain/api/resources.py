@@ -3,8 +3,6 @@ import autologging
 from domain.writer import import_task
 
 
-@autologging.traced
-@autologging.logged
 class BaseResource:
     def __init__(self, controller):
         self.controller = controller

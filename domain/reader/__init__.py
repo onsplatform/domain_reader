@@ -19,11 +19,11 @@ class DomainReader(SQLExecutor):
             if branch['disabled']:
                 ret = self.execute_data_query_at_time(schema, filter_name, params, branch['disabled'])
             elif filter_name == 'byId':
-                ret = self.execute_data_query_by_id(schema, params['Id'])
+                ret = self.execute_data_query_by_id(schema, params)
             else:
                 ret = self.execute_data_query(schema, filter_name, params)
             return list(self._get_response_data(ret, schema))
-    
+
     def get_data_from_table(self, _map, _version, _type, filter_name, params):
         schema = self.schema_api.get_schema(_map, _version, _type)
         if schema:
@@ -50,7 +50,7 @@ class DomainReader(SQLExecutor):
 
     def _get_data_by_id(self, schema, _id):
         if schema:
-            ret = self.execute_data_query_by_id(schema, _id)
+            ret = self.execute_data_query_by_id(schema, {'id': _id})
             return self._get_response_data(ret, schema)
 
     @staticmethod
@@ -63,4 +63,5 @@ class DomainReader(SQLExecutor):
                 dic['_metadata'] = {meta['alias']: getattr(entity, meta['alias']) for meta in metadata}
                 dic['_metadata']['type'] = schema['name']
                 dic['_metadata']['table'] = schema['model']['table']
+                dic['id'] = dic['_metadata']['reproduction_from_id'] if dic['_metadata']['reproduction_from_id'] else dic['id']
                 yield dic
