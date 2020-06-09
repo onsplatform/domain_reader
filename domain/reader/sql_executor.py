@@ -26,10 +26,15 @@ class SQLExecutor(SQLExecutorBase):
         model = self._get_model_from_schema(schema)
         return self._execute_query(self._get_query_by_id(model, params['id']))
 
-    def execute_data_query(self, schema, filter_name, params):
+    def execute_data_query(self, schema, filter_name, params, disabled_branch=None):
         if 'reproduction_id' in params:
             return self.execute_reproduction_data_query(schema, filter_name, params)
+        elif disabled_branch:
+            return self.execute_data_query_at_time(schema, filter_name, params, disabled_branch)
 
+        return self.execute_regular_data_query(filter_name, params, schema)
+
+    def execute_regular_data_query(self, filter_name, params, schema):
         branch, page, page_size = self._get_default_params(params)
         model = self._get_model_from_schema(schema)
         user_query_filter = self._get_user_query_filter(schema['filters'], filter_name, params)
@@ -49,7 +54,8 @@ class SQLExecutor(SQLExecutorBase):
         reproduction_data_query = model_build.select().where(SQL('reproduction_id = %s', (params['reproduction_id'],)))
         where_statement = self._get_where_statement(model, user_query_filter)
         where_params = self._get_where_params(branch, user_query_filter)
-        reproduction_data_query = reproduction_data_query.where(SQL(where_statement, where_params))
+        reproduction_data_query = reproduction_data_query.where(SQL(where_statement, where_params)) \
+            .order_by(model_build.modified_at)
         reproduction_data = self._execute_query(reproduction_data_query)
 
         reproduction_data_from_ids = [item.reproduction_from_id for item in list(reproduction_data) if
@@ -66,7 +72,7 @@ class SQLExecutor(SQLExecutorBase):
     def execute_data_query_at_time(self, schema, filter_name, params, date_validity):
         query = self._get_query_at_time(date_validity, filter_name, params, schema)
         branch, page, page_size = self._get_default_params(params)
-        query = query.order_by('modified_at')
+        query = query
         if page and page_size:
             query = query.paginate(int(page), int(page_size))
         return self._execute_query(query)
@@ -93,7 +99,7 @@ class SQLExecutor(SQLExecutorBase):
         query_master_history = query_master_history.where(
             SQL('(%s between COALESCE(modified, date_created) and modified_until)', (date_validity,))
         ).where(SQL(where_statement, where_params))
-        query = query_master.union(query_master_history)
+        query = query_master.union(query_master_history).order_by(model_build.modified_at)
         return query
 
     def _get_default_params(self, params):

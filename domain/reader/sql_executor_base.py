@@ -1,5 +1,12 @@
 
 class SQLExecutorBase:
+    QUERIES = {
+        'not_deleted': '(deleted is null or not deleted)',
+        'where_specific_branch': 'branch = %s AND ',
+        'where_branch': '(branch in (%s, \'master\')) AND '
+                        'id not in (select from_id from entities.{table} where from_id is not null and branch=%s) AND '
+    }
+
     def __init__(self, orm, db_settings):
         self.orm = orm
         self.db_settings = db_settings
