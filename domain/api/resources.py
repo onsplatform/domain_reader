@@ -170,5 +170,3 @@ class DomainReaderInstanceFilterResource(DomainReaderResource):
             return resp.json(list(result))
         except Exception as e:
             return resp.internal_error("error, see stack")
-
-        return resp.bad_request()

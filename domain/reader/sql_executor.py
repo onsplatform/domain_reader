@@ -20,6 +20,9 @@ class SQLExecutor(SQLExecutorBase):
         super().__init__(orm, db_settings)
 
     def execute_data_query_by_id(self, schema, params):
+        if 'reproduction_id' in params:
+            return self.execute_reproduction_data_query(schema, 'byId', params)
+
         model = self._get_model_from_schema(schema)
         return self._execute_query(self._get_query_by_id(model, params['id']))
 

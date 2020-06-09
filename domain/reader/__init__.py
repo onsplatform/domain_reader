@@ -18,8 +18,6 @@ class DomainReader(SQLExecutor):
             branch = self.schema_api.get_branch(params.get('branch'))
             if branch['disabled']:
                 ret = self.execute_data_query_at_time(schema, filter_name, params, branch['disabled'])
-            elif filter_name == 'byId':
-                ret = self.execute_data_query_by_id(schema, params)
             else:
                 ret = self.execute_data_query(schema, filter_name, params)
             return list(self._get_response_data(ret, schema))

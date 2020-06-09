@@ -23,7 +23,7 @@ gunicorn = "*"
 pydash = "*"
 autologging = "*"
 celery = "*"
-ons-platform-python-sdk = {ref = "coreapi_integration",git = "https://github.com/onsplatform/platform_sdk.git",editable = true}
+ons-platform-python-sdk = {ref = "reproduction",git = "https://github.com/onsplatform/platform_sdk.git",editable = true}
 
 [requires]
 python_version = "3.7"
