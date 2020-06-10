@@ -29,8 +29,7 @@ class DomainReader():
                 ret = self.regular_repository.get_data(schema, filter_name, params)
 
             if filter_name.lower() == 'byid':
-                ret = self._get_response_entity(ret, schema)
-                return ret
+                return self._get_single_response_entity(ret, schema)
 
             return list(self._get_response_data(ret, schema))
 
@@ -72,12 +71,21 @@ class DomainReader():
 
     @staticmethod
     def _get_response_entity(entity, schema):
-        fields = schema['fields']
-        metadata = schema['metadata']
-        dic = {field['alias']: getattr(entity, field['alias']) for field in fields}
-        dic['_metadata'] = {meta['alias']: getattr(entity, meta['alias']) for meta in metadata}
-        dic['_metadata']['type'] = schema['name']
-        dic['_metadata']['table'] = schema['model']['table']
-        dic['id'] = dic['_metadata']['reproduction_from_id'] if dic['_metadata']['reproduction_from_id'] else \
-            dic['id']
-        return dic
+        yield DomainReader._apply_data_modification(entity, schema)
+
+    @staticmethod
+    def _get_single_response_entity(entity, schema):
+        return DomainReader._apply_data_modification(entity, schema)
+
+    @staticmethod
+    def _apply_data_modification(entity, schema):
+        if entity:
+            fields = schema['fields']
+            metadata = schema['metadata']
+            dic = {field['alias']: getattr(entity, field['alias']) for field in fields}
+            dic['_metadata'] = {meta['alias']: getattr(entity, meta['alias']) for meta in metadata}
+            dic['_metadata']['type'] = schema['name']
+            dic['_metadata']['table'] = schema['model']['table']
+            dic['id'] = dic['_metadata']['reproduction_from_id'] if dic['_metadata']['reproduction_from_id'] else \
+                dic['id']
+            return dic

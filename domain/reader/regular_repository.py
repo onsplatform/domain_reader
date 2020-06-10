@@ -6,7 +6,10 @@ class RegularRepository(RepositoryBase):
         super().__init__(orm, db_settings)
 
     def get_data(self, schema, filter_name, params):
-        return self._execute_regular_data_query(filter_name, params, schema)
+        ret = self._execute_regular_data_query(filter_name, params, schema)
+        if filter_name.lower() == 'byid' and ret:
+            ret = ret[0]
+        return ret
 
     def get_history_data(self, schema, _id):
         model = self._get_model_from_schema(schema, True)

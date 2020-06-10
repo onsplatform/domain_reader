@@ -6,12 +6,17 @@ class DisabledBranchRepository(RepositoryBase):
         super().__init__(orm, db_settings)
 
     def get_data(self, schema, filter_name, params, disabled_branch):
-        query = self._get_query_at_time(disabled_branch, filter_name, params, schema)
         branch, page, page_size = self._get_default_params(params)
-        query = query
+        query = self._get_query_at_time(disabled_branch, filter_name, params, schema)
         if page and page_size:
             query = query.paginate(int(page), int(page_size))
-        return self._execute_query(query)
+        ret = self._execute_query(query)
+
+        if filter_name.lower() == 'byid' and ret:
+            ret = ret[0]
+
+        return ret
 
     def get_count(self, schema, filter_name, params, disabled_branch):
-        return 0
+        query = self._get_query_at_time(disabled_branch, filter_name, params, schema)
+        return self._execute_query(query.count())
