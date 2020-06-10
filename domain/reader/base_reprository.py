@@ -3,12 +3,11 @@ import datetime
 
 from peewee import SQL
 
-from .sql import QueryParser
-from .mapper import RemoteField, RemoteMap
-from .sql_executor_base import SQLExecutorBase
+from domain.reader.orms.query_parser import QueryParser
+from domain.reader.orms.mapper import RemoteField, RemoteMap
 
 
-class SQLExecutor(SQLExecutorBase):
+class RepositoryBase:
     QUERIES = {
         'not_deleted': '(deleted is null or not deleted)',
         'where_specific_branch': 'branch = %s AND ',
@@ -17,65 +16,26 @@ class SQLExecutor(SQLExecutorBase):
     }
 
     def __init__(self, orm, db_settings):
-        super().__init__(orm, db_settings)
+        self.orm = orm
+        self.db_settings = db_settings
+        self._create_db(orm, db_settings)
+
+    def _create_db(self, orm, db_settings):
+        self.db = orm.db_factory('postgres', **db_settings)()
+
+    def _execute_query(self, query):  # pragma: no cover
+        try:
+            self.db.connect(reuse_if_open=True)
+            with self.db.atomic():
+                return query
+        except Exception as e:
+            self._trace_local('##### _execute_query ##### ERROR ', e)
+        finally:
+            self.db.close()
 
     def execute_data_query_by_id(self, schema, params):
-        if 'reproduction_id' in params:
-            return self.execute_reproduction_data_query(schema, 'byId', params)
-
         model = self._get_model_from_schema(schema)
         return self._execute_query(self._get_query_by_id(model, params['id']))
-
-    def execute_data_query(self, schema, filter_name, params, disabled_branch=None):
-        if 'reproduction_id' in params:
-            return self.execute_reproduction_data_query(schema, filter_name, params)
-        elif disabled_branch:
-            return self.execute_data_query_at_time(schema, filter_name, params, disabled_branch)
-
-        return self.execute_regular_data_query(filter_name, params, schema)
-
-    def execute_regular_data_query(self, filter_name, params, schema):
-        branch, page, page_size = self._get_default_params(params)
-        model = self._get_model_from_schema(schema)
-        user_query_filter = self._get_user_query_filter(schema['filters'], filter_name, params)
-        query = self._get_query(model, user_query_filter, branch)
-        if page and page_size:
-            query = query.paginate(int(page), int(page_size))
-        return self._execute_query(query)
-
-    def execute_reproduction_data_query(self, schema, filter_name, params):
-        branch, page, page_size = self._get_default_params(params)
-        query_at_time = self._get_query_at_time(params['reproduction_date'], filter_name, params, schema)
-        data_at_time = self._execute_query(query_at_time)
-
-        user_query_filter = self._get_user_query_filter(schema['filters'], filter_name, params)
-        model = self._get_model_from_schema(schema)
-        model_build = model.build(self.db)
-        reproduction_data_query = model_build.select().where(SQL('reproduction_id = %s', (params['reproduction_id'],)))
-        where_statement = self._get_where_statement(model, user_query_filter)
-        where_params = self._get_where_params(branch, user_query_filter)
-        reproduction_data_query = reproduction_data_query.where(SQL(where_statement, where_params)) \
-            .order_by(model_build.modified_at)
-        reproduction_data = self._execute_query(reproduction_data_query)
-
-        reproduction_data_from_ids = [item.reproduction_from_id for item in list(reproduction_data) if
-                                      item.reproduction_from_id]
-
-        not_override = [data for data in list(data_at_time) if data.id not in reproduction_data_from_ids] + \
-                       list(reproduction_data)
-
-        if page and page_size:
-            offset = (page - 1) * page_size
-            not_override = not_override[offset:page_size]
-        return not_override
-
-    def execute_data_query_at_time(self, schema, filter_name, params, date_validity):
-        query = self._get_query_at_time(date_validity, filter_name, params, schema)
-        branch, page, page_size = self._get_default_params(params)
-        query = query
-        if page and page_size:
-            query = query.paginate(int(page), int(page_size))
-        return self._execute_query(query)
 
     def _get_query_at_time(self, date_validity, filter_name, params, schema):
         date_validity = datetime.datetime.strptime(date_validity, '%Y-%m-%dT%H:%M:%SZ')
@@ -107,16 +67,6 @@ class SQLExecutor(SQLExecutorBase):
         branch = params.get('branch')
         page_size = params.get('page_size', 20)
         return branch, page, page_size
-
-    def execute_history_data_query(self, schema, _id):
-        model = self._get_model_from_schema(schema, True)
-        return self._execute_query(self._get_query_by_id(model, _id))
-
-    def execute_count_query(self, schema, filter_name, params):
-        branch = params.get('branch')
-        model = self._get_model_from_schema(schema)
-        user_query_filter = self._get_user_query_filter(schema['filters'], filter_name, params)
-        return self._execute_query(self._get_count_query(model, user_query_filter, branch))
 
     def _get_model_from_schema(self, schema, history=False):
         return self._get_model(schema['model'], schema['fields'] + schema['metadata'], history)
