@@ -1,6 +1,7 @@
 from pydash import objects
 from datetime import datetime
 from autologging import logged
+from platform_sdk.domain.schema.api import SchemaApi
 
 from platform_sdk.process_memory import ProcessMemoryApi
 from .sql_executor_base import SqlExecutorBase
@@ -20,9 +21,10 @@ class DomainWriter(SqlExecutorBase):
         "%": '%%'
     }
 
-    def __init__(self, orm, db_settings, process_memory_settings=None):
+    def __init__(self, orm, db_settings, process_memory_settings=None, schema_settings=None):
         super().__init__(orm, db_settings)
         self.query_translator = str.maketrans(self.HOLDERS)
+        self.schema_api = SchemaApi(schema_settings)
         if process_memory_settings:
             self.process_memory_api = ProcessMemoryApi(process_memory_settings)
 
@@ -47,7 +49,11 @@ class DomainWriter(SqlExecutorBase):
 
                 for entity in entities:
                     entity['meta_instance_id'] = instance_id
-                    branch = objects.get(entity, '_metadata.branch')
+                    branch = self.schema_api.get_branch(objects.get(entity, '_metadata.branch'))
+
+                    if branch['disabled'] or branch['deleted']:
+                        continue
+
                     change_track = objects.get(entity, '_metadata.changeTrack')
                     from_id = objects.get(entity, '_metadata.from_id')
 
@@ -55,9 +61,9 @@ class DomainWriter(SqlExecutorBase):
                         self.fill_updated_reproduction_entity(change_track, entity)
                         # we will create a new entity when updating one when in reproduction
                         yield from self._create(entity, fields, from_id, table)
-                    elif self._is_update_on_master(branch, change_track, instance_id):
+                    elif self._is_update_on_master(branch['name'], change_track, instance_id):
                         yield from self._update_on_master(change_track, entity, fields, table)
-                    elif self._is_update_on_branch(branch, change_track, instance_id):
+                    elif self._is_update_on_branch(branch['name'], change_track, instance_id):
                         yield from self._update_on_branch(change_track, entity, fields, from_id, table)
                     else:
                         if reproduction_id:

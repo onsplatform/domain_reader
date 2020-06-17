@@ -20,7 +20,7 @@ api = falcon.API(response_type=utils.APIResponse, request_type=utils.APIRequest)
 api_version = 1
 
 domain_reader = DomainReader(settings.ORM, settings.DATABASE, settings.SCHEMA)
-domain_writer = DomainWriter(settings.ORM, settings.DATABASE, settings.PROCESS_MEMORY)
+domain_writer = DomainWriter(settings.ORM, settings.DATABASE, settings.PROCESS_MEMORY, settings.SCHEMA)
 
 domain_reader_resource = resources.DomainReaderResource(domain_reader)
 domain_reader_instance_filter_resource = resources.DomainReaderInstanceFilterResource(domain_reader)
