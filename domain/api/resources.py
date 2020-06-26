@@ -9,7 +9,6 @@ class BaseResource:
         self._trace_local = lambda v, m: \
             self._DomainReaderResource__log.log(
                 msg=f'{v}:{m}', level=autologging.TRACE)
-            
 
     @staticmethod
     def add_branch_filter(req, params):
@@ -24,6 +23,18 @@ class BaseResource:
             params['reproduction_date'] = req.get_header('ReproductionDate')
         return params
 
+    @staticmethod
+    def add_solution_id(req, params):
+        if req.get_header('SolutionId'):
+            params['solution_id'] = req.get_header('SolutionId')
+        return params
+
+    def _read_params(self, req, params):
+        self.add_branch_filter(req, params)
+        self.add_reproduction_id(req, params)
+        self.add_solution_id(req, params)
+        return params
+
 
 @autologging.traced
 @autologging.logged
@@ -33,7 +44,6 @@ class DomainBatchWriterResource(BaseResource):
 
     def on_post(self, req, resp):
         import_task.import_data.delay(req.json())
-
         return resp.accepted()
 
 
@@ -47,10 +57,12 @@ class DomainWriterResource(BaseResource):
         if not _instance_id:
             return resp.bad_request()
 
-        if not self.controller.save_data(_instance_id):
+        params = self._read_params(req, req.params)
+        if not self.controller.save_data(_instance_id, params):
             return resp.internal_error()
 
         return resp.accepted()
+
 
 @autologging.traced
 @autologging.logged
@@ -61,10 +73,8 @@ class DomainReaderResource(BaseResource):
     def on_post(self, req, resp, _map, _version, _type, _filter):
         if _map:
             try:
-                params = self.add_branch_filter(req, req.json())
-                params = self.add_reproduction_id(req, params)
+                params = self._read_params(req, req.json())
                 data = self.controller.get_data(_map, _version, _type, _filter, params)
-                
                 return resp.json(data)
             except Exception as e:
                 self._trace_local('###### ERROR ######', e)
@@ -75,8 +85,7 @@ class DomainReaderResource(BaseResource):
     def on_get(self, req, resp, _map, _version, _type, _filter):
         if _map:
             try:
-                params = self.add_branch_filter(req, req.params)
-                params = self.add_reproduction_id(req, params)
+                params = self.read_params(req, req.params)
                 data = self.controller.get_data(_map, _version, _type, _filter, params)
                 return resp.json(data)
             except Exception as e:
@@ -88,8 +97,7 @@ class DomainReaderResource(BaseResource):
     def on_post_count(self, req, resp, _map, _version, _type, _filter):
         if _map:
             try:
-                params = self.add_branch_filter(req, req.json())
-                params = self.add_reproduction_id(req, params)
+                params = self.read_params(req, req.json())
                 data = self.controller.get_data_count(_map, _version, _type, _filter, params)
                 return resp.json(data)
             except Exception as e:
@@ -101,8 +109,7 @@ class DomainReaderResource(BaseResource):
     def on_get_count(self, req, resp, _map, _version, _type, _filter):
         if _map:
             try:
-                params = self.add_branch_filter(req, req.params)
-                params = self.add_reproduction_id(req, params)
+                params = self.read_params(req, req.params)
                 data = self.controller.get_data_count(_map, _version, _type, _filter, params)
                 return resp.json(data)
             except Exception as e:
@@ -138,6 +145,7 @@ class DomainHistoryResource(BaseResource):
 
         return resp.bad_request()
 
+
 @autologging.traced
 @autologging.logged
 class DomainReaderInstanceFilterResource(DomainReaderResource):
@@ -152,14 +160,14 @@ class DomainReaderInstanceFilterResource(DomainReaderResource):
             request = req.json()
             filters = request['filters']
             entities = request['entities']
-            
+
             result = set()
             for filter in filters:
                 data = self.controller.get_data_from_table(filter['app'],
-                                                filter['version'],
-                                                filter['type'],
-                                                filter['filter_name'],
-                                                filter['params'])
+                                                           filter['version'],
+                                                           filter['type'],
+                                                           filter['filter_name'],
+                                                           filter['params'])
 
                 if data['data']:
                     entities_from_table = self.get_entities_from_table(entities, data['table'])

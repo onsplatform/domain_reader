@@ -28,19 +28,20 @@ class DomainWriter(SqlExecutorBase):
         if process_memory_settings:
             self.process_memory_api = ProcessMemoryApi(process_memory_settings)
 
-    def save_data(self, process_memory_id):
+    def save_data(self, process_memory_id, params):
         data = self.process_memory_api.get_process_memory_data(process_memory_id)
         content = objects.get(data, 'map.content')
         entities = objects.get(data, 'dataset.entities')
         instance_id = objects.get(data, 'instanceId')
-        reproduction_id = objects.get(data, 'ReproductionId')
+        solution_id = params.get("solution_id")
+        reproduction_id = params.get("reproduction_id", None)
 
         if content and entities:
-            bulk_sql = self._get_bulk_sql(entities, content, instance_id, reproduction_id)
+            bulk_sql = self._get_bulk_sql(entities, content, instance_id, reproduction_id, solution_id)
             self._execute_query(bulk_sql)
             return True
 
-    def _get_bulk_sql(self, data, schemas, instance_id, reproduction_id):
+    def _get_bulk_sql(self, data, schemas, instance_id, reproduction_id, solution_id):
         for _type, entities in data.items():
             if entities:
                 schema = self._get_schema(schemas)[_type]
@@ -49,7 +50,8 @@ class DomainWriter(SqlExecutorBase):
 
                 for entity in entities:
                     entity['meta_instance_id'] = instance_id
-                    branch = self.schema_api.get_branch(objects.get(entity, '_metadata.branch'))
+                    solution = self.schema_api.get_solution(solution_id)
+                    branch = self.schema_api.get_branch(objects.get(entity, '_metadata.branch'), solution["name"])
 
                     if branch['disabled'] or branch['deleted']:
                         continue

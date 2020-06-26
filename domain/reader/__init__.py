@@ -7,7 +7,7 @@ from .disabled_branch_repository import DisabledBranchRepository
 
 
 @autologging.logged
-class DomainReader():
+class DomainReader:
 
     def __init__(self, orm, db_settings, schema_settings):
         self.schema_api = SchemaApi(schema_settings)
@@ -19,12 +19,12 @@ class DomainReader():
     def get_data(self, _map, _version, _type, filter_name, params):
         schema = self.schema_api.get_schema(_map, _version, _type)
         if schema:
-            branch = self.schema_api.get_branch(params.get('branch'))
+            solution = self.schema_api.get_solution(params.get("solution_id"))
+            branch = self.schema_api.get_branch(params.get('branch'), solution['name'])
             if 'reproduction_id' in params:
                 ret = self.reproduction_repository.get_data(schema, filter_name, params)
             elif branch['disabled']:
-                ret = self.disabled_branch_repository.get_data(schema, filter_name, params,
-                                                                         branch['disabled'])
+                ret = self.disabled_branch_repository.get_data(schema, filter_name, params, branch['disabled'])
             else:
                 ret = self.regular_repository.get_data(schema, filter_name, params)
 
@@ -36,7 +36,8 @@ class DomainReader():
     def get_data_count(self, _map, _version, _type, filter_name, params):
         schema = self.schema_api.get_schema(_map, _version, _type)
         if schema:
-            branch = self.schema_api.get_branch(params.get('branch'))
+            solution = self.schema_api.get_solution(params.get("solution_id"))
+            branch = self.schema_api.get_branch(params.get('branch'), solution['name'])
             if 'reproduction_id' in params:
                 ret = self.reproduction_repository.get_count(schema, filter_name, params)
             elif branch['disabled']:
