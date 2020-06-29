@@ -38,9 +38,7 @@ class RepositoryBase:
         return self._execute_query(self._get_query_by_id(model, params['id']))
 
     def _get_query_at_time(self, date_validity, filter_name, params, schema):
-        date_validity = datetime.datetime.strptime(date_validity, '%Y-%m-%dT%H:%M:%SZ')
-        pst = pytz.timezone('Etc/GMT-3')
-        date_validity = pst.localize(date_validity)
+        date_validity = datetime.datetime.strptime(date_validity, '%Y-%m-%dT%H:%M:%S.%fZ')
         branch, page, page_size = self._get_default_params(params)
         user_query_filter = self._get_user_query_filter(schema['filters'], filter_name, params)
         model = self._get_model_from_schema(schema)
